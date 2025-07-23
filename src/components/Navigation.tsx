@@ -3,9 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   Code, 
-  Lightbulb, 
-  FileCode, 
-  Users, 
+  BookOpen, 
   Home, 
   Menu, 
   X 
@@ -18,9 +16,7 @@ const Navigation = () => {
   const navItems = [
     { to: "/", label: "Home", icon: Home },
     { to: "/code-space", label: "Code Space", icon: Code },
-    { to: "/hints", label: "Hints", icon: Lightbulb },
-    { to: "/snippets", label: "Snippets", icon: FileCode },
-    { to: "/collaborate", label: "Collaborate", icon: Users },
+    { to: "/study-plans", label: "Study Plans", icon: BookOpen },
   ];
 
   const isActive = (path: string) => location.pathname === path;

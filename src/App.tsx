@@ -5,9 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CodeSpace from "./pages/CodeSpace";
-import HintsLibrary from "./pages/HintsLibrary";
-import SnippetsRepository from "./pages/SnippetsRepository";
-import Collaboration from "./pages/Collaboration";
+import StudyPlans from "./pages/StudyPlans";
+import StudyPlanDetail from "./pages/StudyPlanDetail";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 
@@ -23,9 +22,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/code-space" element={<Layout><CodeSpace /></Layout>} />
-            <Route path="/hints" element={<Layout><HintsLibrary /></Layout>} />
-            <Route path="/snippets" element={<Layout><SnippetsRepository /></Layout>} />
-            <Route path="/collaborate" element={<Layout><Collaboration /></Layout>} />
+            <Route path="/study-plans" element={<Layout><StudyPlans /></Layout>} />
+            <Route path="/study-plan/:planId" element={<Layout><StudyPlanDetail /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
