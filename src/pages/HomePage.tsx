@@ -3,9 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Code, 
-  Lightbulb, 
-  FileCode, 
-  Users, 
+  BookOpen,
   ArrowRight,
   Zap,
   Shield,
@@ -21,22 +19,10 @@ const HomePage = () => {
       link: "/code-space"
     },
     {
-      icon: Lightbulb,
-      title: "Progressive Hints",
-      description: "Get step-by-step guidance without spoilers. Unlock hints as you need them.",
-      link: "/hints"
-    },
-    {
-      icon: FileCode,
-      title: "Code Snippets",
-      description: "Access a repository of verified, ready-to-use code snippets for common problems.",
-      link: "/snippets"
-    },
-    {
-      icon: Users,
-      title: "Private Collaboration",
-      description: "Share hints and review code securely with your team members.",
-      link: "/collaborate"
+      icon: BookOpen,
+      title: "Study Plans",
+      description: "Browse curated study plans with practice questions and track your progress.",
+      link: "/study-plans"
     }
   ];
 
@@ -69,7 +55,7 @@ const HomePage = () => {
             Workflow
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Hint Hub provides step-by-step hints, curated code snippets, and smart guidance 
+            Hint Hub provides code analysis, suggestions, and curated study plans 
             to help you solve complex problems faster and learn better.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -79,9 +65,9 @@ const HomePage = () => {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/hints">
+            <Link to="/study-plans">
               <Button variant="outline" size="lg">
-                Browse Hints
+                Browse Study Plans
               </Button>
             </Link>
           </div>
@@ -98,7 +84,7 @@ const HomePage = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {features.map(({ icon: Icon, title, description, link }) => (
               <Link key={title} to={link}>
                 <Card className="h-full hover:shadow-lg transition-shadow bg-card">
