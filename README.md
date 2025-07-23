@@ -1,73 +1,63 @@
-# Welcome to your Lovable project
+Hint Hub
+Hint Hub is a powerful, private developer tool designed to accelerate programming workflows and foster learning. Whether you’re tackling algorithm challenges, debugging application code, or seeking optimized solutions, Hint Hub provides step-by-step hints, curated code snippets, and smart guidance—all in one place.
 
-## Project info
+At its core, Hint Hub enables developers to break down complex problems, explore alternative solutions, and sharpen their skills by unveiling just enough guidance when needed. The platform is especially valuable for teams working on internal projects, coding bootcamps, or anyone seeking to elevate their problem-solving abilities in a secure and collaborative environment.
 
-**URL**: https://lovable.dev/projects/57285077-b433-4d9b-a64e-992a288fc739
+Technologies Used
+Hint Hub is built using the following technologies:
 
-## How can I edit this code?
+Vite: Fast development environment and build tool.
 
-There are several ways of editing your application.
+TypeScript: Typed superset of JavaScript for safer code.
 
-**Use Lovable**
+React: Library for building modern user interfaces.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/57285077-b433-4d9b-a64e-992a288fc739) and start prompting.
+shadcn-ui: Collection of accessible, customizable UI components.
 
-Changes made via Lovable will be committed automatically to this repo.
+Tailwind CSS: Utility-first CSS framework for quick, consistent styling.
 
-**Use your preferred IDE**
+Key Features
+Code Space for Suggestions: Paste your code directly into the interactive code space and receive intelligent suggestions, including best practices, bug detections, and optimization tips.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Curated Coding Hints & Steps: Access comprehensive, progressive hints that guide you through intricate problems without giving away the full solution at once.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Ready-to-Use Code Snippets: Benefit from a repository of verified code snippets for common problems, which can be copied and integrated into your own workflow.
 
-Follow these steps:
+Smart Search & Filtering: Find hints, solutions, or code reviews using robust search and filtering tools by language, topic, or difficulty.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+(Private) Collaboration: Collaborate securely with team members, sharing hints or reviewing code in a trusted environment.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Example Use Case
+Paste your code: Use the built-in code space to input your current function or script.
 
-# Step 3: Install the necessary dependencies.
-npm i
+Get instant suggestions: Receive on-the-fly feedback, such as syntax corrections, optimization hints, or alternative approaches.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Request a hint: If you’re stuck, unlock tailored hints that nudge you in the right direction—no spoilers unless you ask for the full solution!
 
-**Edit a file directly in GitHub**
+Why Hint Hub?
+Boost Productivity: Reduce time spent stuck on bugs or design decisions with actionable, context-aware advice.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Improve Code Quality: Leverage automated suggestions to catch issues early and learn best practices.
 
-**Use GitHub Codespaces**
+Safe & Private: All data, hints, and interactions remain within your authorized team.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+How to Contribute or Edit Files
+There are two main ways to edit files in this project:
 
-## What technologies are used for this project?
+Edit a File Directly in GitHub
+Navigate to the desired file in the repository.
 
-This project is built with:
+Click the "Edit" button (pencil icon) at the top right of the file view.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Make your changes.
 
-## How can I deploy this project?
+Commit and save the changes directly from the GitHub web interface.
 
-Simply open [Lovable](https://lovable.dev/projects/57285077-b433-4d9b-a64e-992a288fc739) and click on Share -> Publish.
+Use GitHub Codespaces
+On the main page of your repository, click the "Code" button (green button).
 
-## Can I connect a custom domain to my Lovable project?
+Select the "Codespaces" tab.
 
-Yes, you can!
+Click "New codespace" to launch a dedicated development environment.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Edit files directly within Codespaces, then commit and push your changes when done.
