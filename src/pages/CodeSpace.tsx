@@ -16,6 +16,7 @@ import {
 const CodeSpace = () => {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
+  const [question, setQuestion] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   useEffect(() => {
@@ -46,6 +47,15 @@ const CodeSpace = () => {
 
   const clearCode = () => {
     setCode("");
+  };
+
+  const handlePasteQuestion = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setQuestion(text);
+    } catch (err) {
+      toast({ title: "Failed to paste from clipboard", description: "Please allow clipboard access and try again." });
+    }
   };
 
   return (
@@ -86,6 +96,18 @@ const CodeSpace = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <label className="block mb-2 font-medium text-sm">Paste your question here</label>
+                <div className="flex gap-2 mb-4">
+                  <Textarea
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="Paste your question here..."
+                    className="min-h-20 flex-1"
+                  />
+                  <Button type="button" variant="outline" onClick={handlePasteQuestion}>
+                    Paste
+                  </Button>
+                </div>
                 <Textarea
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
