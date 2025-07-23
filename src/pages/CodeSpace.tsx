@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import CodeChatbot from "@/components/CodeChatbot";
+import { useNavigate } from "react-router-dom";
+import { auth } from "@/lib/firebase";
 import { 
   Code, 
   Copy, 
@@ -15,6 +17,15 @@ const CodeSpace = () => {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const { toast } = useToast();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        navigate("/", { replace: true });
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const languages = [
     { value: "javascript", label: "JavaScript" },

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -9,6 +9,10 @@ import {
   Shield,
   Target
 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { auth } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 
 const HomePage = () => {
   const features = [
@@ -44,6 +48,30 @@ const HomePage = () => {
     }
   ];
 
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleProtectedNavigation = async (path: string) => {
+    if (!auth.currentUser) {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        navigate(path);
+      } catch (error) {
+        alert("Sign-in failed. Please try again.");
+      }
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -59,17 +87,13 @@ const HomePage = () => {
             to help you solve complex problems faster and learn better.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/code-space">
-              <Button size="lg" className="flex items-center gap-2">
-                Start Coding
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/study-plans">
-              <Button variant="outline" size="lg">
-                Browse Study Plans
-              </Button>
-            </Link>
+            <Button size="lg" className="flex items-center gap-2" onClick={() => handleProtectedNavigation("/code-space")}> 
+              Start Coding
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => handleProtectedNavigation("/study-plans")}> 
+              Browse Study Plans
+            </Button>
           </div>
         </div>
       </section>
@@ -83,11 +107,10 @@ const HomePage = () => {
               Everything you need to accelerate your programming workflow and foster learning.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {features.map(({ icon: Icon, title, description, link }) => (
-              <Link key={title} to={link}>
-                <Card className="h-full hover:shadow-lg transition-shadow bg-card">
+          {user && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {features.map(({ icon: Icon, title, description, link }) => (
+                <div key={title} className="h-full hover:shadow-lg transition-shadow bg-card cursor-pointer text-left rounded-lg border" onClick={() => handleProtectedNavigation(link)}>
                   <CardHeader>
                     <div className="flex items-center gap-3 mb-2">
                       <div className="p-2 bg-primary/10 rounded-lg">
@@ -101,10 +124,10 @@ const HomePage = () => {
                       {description}
                     </CardDescription>
                   </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

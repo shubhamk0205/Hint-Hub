@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,22 @@ import {
   Filter
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { auth } from "@/lib/firebase";
 
 const StudyPlans = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        navigate("/", { replace: true });
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const studyPlans = [
     {

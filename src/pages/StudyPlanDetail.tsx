@@ -15,12 +15,22 @@ import {
   Target,
   TrendingUp
 } from "lucide-react";
+import { auth } from "@/lib/firebase";
 
 const StudyPlanDetail = () => {
   const { planId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [studyPlan, setStudyPlan] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        navigate("/", { replace: true });
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   // Mock data - in a real app, this would come from an API or state management
   const studyPlans = [
