@@ -1,20 +1,42 @@
 Hint Hub
-Hint Hub is a powerful, private developer tool designed to accelerate programming workflows and foster learning. Whether you’re tackling algorithm challenges, debugging application code, or seeking optimized solutions, Hint Hub provides step-by-step hints, curated code snippets, and smart guidance—all in one place.
+Hint Hub is a powerful, private developer tool designed to accelerate programming workflows and foster learning. Whether you're tackling algorithm challenges, debugging application code, or seeking optimized solutions, Hint Hub provides step-by-step hints, curated code snippets, and smart guidance—all in one place.
 
 At its core, Hint Hub enables developers to break down complex problems, explore alternative solutions, and sharpen their skills by unveiling just enough guidance when needed. The platform is especially valuable for teams working on internal projects, coding bootcamps, or anyone seeking to elevate their problem-solving abilities in a secure and collaborative environment.
 
-Technologies Used
+## Setup Instructions
+
+### 1. Clone the Repository
+```bash
+git clone <your-repo-url>
+cd Hint-Hub
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+The application is configured to use OpenRouter API with a pre-configured API key. No additional environment variables are required.
+
+**Note:** The application uses OpenRouter API with Claude 3.5 Sonnet model for AI-powered code analysis and suggestions.
+
+### 4. Start the Development Server
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:8080`
+
+## Technologies Used
 Hint Hub is built using the following technologies:
 
-Vite: Fast development environment and build tool.
-
-TypeScript: Typed superset of JavaScript for safer code.
-
-React: Library for building modern user interfaces.
-
-shadcn-ui: Collection of accessible, customizable UI components.
-
-Tailwind CSS: Utility-first CSS framework for quick, consistent styling.
+- **Vite**: Fast development environment and build tool.
+- **TypeScript**: Typed superset of JavaScript for safer code.
+- **React**: Library for building modern user interfaces.
+- **shadcn-ui**: Collection of accessible, customizable UI components.
+- **Tailwind CSS**: Utility-first CSS framework for quick, consistent styling.
+- **OpenRouter API**: AI-powered code analysis and suggestions using Claude 3.5 Sonnet.
 
 Key Features
 Code Space for Suggestions: Paste your code directly into the interactive code space and receive intelligent suggestions, including best practices, bug detections, and optimization tips.

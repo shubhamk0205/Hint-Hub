@@ -14,7 +14,7 @@ import {
   CheckCircle,
   ArrowRight
 } from "lucide-react";
-import { getGeminiResponse } from "@/lib/gemini";
+import { getOpenRouterResponse } from "@/lib/openrouter";
 
 interface Message {
   id: string;
@@ -27,9 +27,10 @@ interface Message {
 interface CodeChatbotProps {
   code: string;
   language: string;
+  question: string;
 }
 
-const CodeChatbot = ({ code, language }: CodeChatbotProps) => {
+const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -70,22 +71,37 @@ const CodeChatbot = ({ code, language }: CodeChatbotProps) => {
     setInput("");
     setIsTyping(true);
 
-    // Gemini API call
-    const botContent = await getGeminiResponse({
-      userMessage: input,
-      code,
-      language
-    });
-    const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'bot',
-      content: botContent,
-      timestamp: new Date(),
-      messageType: 'general' // Could parse for hint/suggestion if needed
-    };
+    try {
+      // OpenRouter API call
+      const botContent = await getOpenRouterResponse({
+        userMessage: input,
+        code,
+        language,
+        question
+      });
+      
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: botContent,
+        timestamp: new Date(),
+        messageType: 'general' // Could parse for hint/suggestion if needed
+      };
 
-    setMessages(prev => [...prev, botMessage]);
-    setIsTyping(false);
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error getting OpenRouter response:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: `Error: ${error instanceof Error ? error.message : 'Failed to get response from AI assistant. Please check your API key configuration.'}`,
+        timestamp: new Date(),
+        messageType: 'general'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -161,10 +177,15 @@ const CodeChatbot = ({ code, language }: CodeChatbotProps) => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="bg-muted p-3 rounded-lg">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Thinking... (This may take a moment due to rate limiting)
+                    </div>
                   </div>
                 </div>
               </div>

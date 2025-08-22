@@ -133,7 +133,7 @@ const CodeSpace = () => {
 
           {/* AI Chatbot Section */}
           <div>
-            <CodeChatbot code={code} language={language} />
+            <CodeChatbot code={code} language={language} question={question} />
           </div>
         </div>
       </div>
