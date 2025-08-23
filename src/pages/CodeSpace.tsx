@@ -15,7 +15,7 @@ import {
 
 const CodeSpace = () => {
   const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("java");
   const [question, setQuestion] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();

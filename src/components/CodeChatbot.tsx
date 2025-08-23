@@ -44,6 +44,13 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  const initialQuestions = [
+    "Unable to understand the problem",
+    "Unable to think of a solution",
+    "My code isn't working",
+    "Tell me edge cases for this problem"
+  ];
+
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -55,6 +62,14 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  // Add a more reliable scroll effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -104,6 +119,10 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
     }
   };
 
+  const handleQuickQuestion = (questionText: string) => {
+    setInput(questionText);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -130,15 +149,15 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="h-[600px] flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Bot className="h-5 w-5 text-primary" />
           Code Assistant
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea ref={scrollAreaRef} className="flex-1 px-4">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 min-h-0">
           <div className="space-y-4 pb-4">
             {messages.map((message) => (
               <div
@@ -169,6 +188,36 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
                 </div>
               </div>
             ))}
+            
+            {/* Initial Questions Section */}
+            {messages.length === 1 && (
+              <div className="flex gap-3">
+                <Avatar className="h-8 w-8 flex-shrink-0">
+                  <AvatarFallback className="bg-muted">
+                    <Bot className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 max-w-[80%]">
+                  <div className="bg-muted p-3 rounded-lg">
+                    <div className="text-sm mb-3">Try asking me:</div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {initialQuestions.map((question, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          className="justify-start text-left h-auto py-2 px-3 text-xs"
+                          onClick={() => handleQuickQuestion(question)}
+                        >
+                          {question}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {isTyping && (
               <div className="flex gap-3">
                 <Avatar className="h-8 w-8 flex-shrink-0">
@@ -192,7 +241,7 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
             )}
           </div>
         </ScrollArea>
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <div className="flex gap-2">
             <Input
               value={input}
