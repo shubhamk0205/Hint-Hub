@@ -6,7 +6,7 @@ import {
   BookOpen, 
   Home, 
   Menu, 
-  X 
+  X
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { auth } from "@/lib/firebase";

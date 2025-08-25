@@ -28,6 +28,27 @@ const CodeSpace = () => {
     return () => unsubscribe();
   }, [navigate]);
 
+  // Check for pre-filled question from interview questions
+  useEffect(() => {
+    const prefilledQuestion = localStorage.getItem('prefilledQuestion');
+    const questionSource = localStorage.getItem('questionSource');
+    
+    if (prefilledQuestion) {
+      setQuestion(prefilledQuestion);
+      // Clear the localStorage after using it
+      localStorage.removeItem('prefilledQuestion');
+      localStorage.removeItem('questionSource');
+      
+      // Show a toast notification
+      if (questionSource) {
+        toast({
+          title: "Question Loaded",
+          description: `Loaded ${questionSource} from Interview Questions section.`,
+        });
+      }
+    }
+  }, [toast]);
+
   const languages = [
     { value: "javascript", label: "JavaScript" },
     { value: "python", label: "Python" },
