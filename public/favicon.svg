@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .hint-text { fill: none; stroke: white; stroke-width: 1; font-family: Arial, sans-serif; font-weight: bold; }
+      .hub-bg { fill: #ff6b35; }
+      .hub-text { fill: white; font-family: Arial, sans-serif; font-weight: bold; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="32" height="32" fill="#1a1a1a"/>
+  
+  <!-- "Hint" text (white outline) -->
+  <text x="4" y="12" class="hint-text" font-size="8">Hint</text>
+  
+  <!-- "Hub" background (orange rounded rectangle) -->
+  <rect x="18" y="6" width="10" height="8" rx="2" class="hub-bg"/>
+  
+  <!-- "Hub" text (solid white) -->
+  <text x="19" y="12" class="hub-text" font-size="8">Hub</text>
+</svg>
