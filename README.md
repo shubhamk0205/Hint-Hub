@@ -1,85 +1,181 @@
-Hint Hub
-Hint Hub is a powerful, private developer tool designed to accelerate programming workflows and foster learning. Whether you're tackling algorithm challenges, debugging application code, or seeking optimized solutions, Hint Hub provides step-by-step hints, curated code snippets, and smart guidance—all in one place.
+# Hint Hub - AI-Powered DSA Learning Platform
 
-At its core, Hint Hub enables developers to break down complex problems, explore alternative solutions, and sharpen their skills by unveiling just enough guidance when needed. The platform is especially valuable for teams working on internal projects, coding bootcamps, or anyone seeking to elevate their problem-solving abilities in a secure and collaborative environment.
+<div align="center">
+  <img src="public/lovable-uploads/5c8987ad-b71e-4082-acd9-e9cfda240e82.png" alt="Hint Hub Logo" width="200"/>
+  
+  **Master Data Structures & Algorithms Through Intelligent Guidance**
+</div>
 
-## Setup Instructions
+## 🎯 About Hint Hub
 
-### 1. Clone the Repository
-```bash
-git clone <your-repo-url>
-cd Hint-Hub
-```
+Hint Hub is an AI-powered platform designed to help users master Data Structures and Algorithms (DSA) more effectively. Rather than providing direct answers, our AI delivers hints, guiding questions, and instant feedback to foster problem-solving and deeper understanding.
 
-### 2. Install Dependencies
-```bash
-npm install
-```
+### 🧠 Our Learning Philosophy
 
-### 3. Configure Environment Variables
-The application is configured to use OpenRouter API with a pre-configured API key. No additional environment variables are required.
+We believe in **building problem-solvers, not just providing answers**. Our approach focuses on:
+- **Guided Discovery**: AI provides targeted hints and probing questions
+- **Active Learning**: Users reflect and try new approaches independently
+- **Deep Understanding**: Focus on developing strong thinking skills over memorization
+- **Progressive Mastery**: Step-by-step guidance without spoiling the learning journey
 
-**Note:** The application uses OpenRouter API with Claude 3.5 Sonnet model for AI-powered code analysis and suggestions.
+## ✨ Key Features
 
-### 4. Start the Development Server
-```bash
-npm run dev
-```
+### 🤖 AI-Powered Learning Assistant
+- **Smart Hints**: Receive targeted hints and probing questions that guide your thinking
+- **Instant Feedback**: Get immediate feedback on your approach without revealing solutions
+- **Adaptive Guidance**: AI adapts to your learning pace and problem-solving style
+- **Critical Thinking**: Develop strong analytical skills through guided exploration
 
-The application will be available at `http://localhost:8080`
+### 📚 Comprehensive Study Plans
+- **Customizable Learning Paths**: Select interview questions and organize them as to-do lists
+- **Progress Tracking**: Mark questions as completed and monitor your learning journey
+- **Linked Resources**: Each question connects to focused practice opportunities
+- **Structured Learning**: 10 topic-specific playlists from beginner to advanced
 
-## Technologies Used
-Hint Hub is built using the following technologies:
+### 🎯 Topic Mastery Playlists
+Our learning section features carefully curated playlists:
 
-- **Vite**: Fast development environment and build tool.
-- **TypeScript**: Typed superset of JavaScript for safer code.
-- **React**: Library for building modern user interfaces.
-- **shadcn-ui**: Collection of accessible, customizable UI components.
-- **Tailwind CSS**: Utility-first CSS framework for quick, consistent styling.
-- **OpenRouter API**: AI-powered code analysis and suggestions using Claude 3.5 Sonnet.
+#### **Beginner Level**
+- **Arrays Mastery** (18 questions) - Master array manipulation and optimization
+- **Strings Mastery** (18 questions) - Learn string processing and pattern matching
 
-Key Features
-Code Space for Suggestions: Paste your code directly into the interactive code space and receive intelligent suggestions, including best practices, bug detections, and optimization tips.
+#### **Intermediate Level**
+- **Stacks & Queues** (16 questions) - Understand LIFO/FIFO concepts
+- **Sorting & Searching** (18 questions) - Master fundamental algorithms
+- **Two Pointers & Sliding Window** (18 questions) - Learn optimization techniques
+- **Linked Lists** (16 questions) - Master pointer manipulation
+- **Trees** (18 questions) - Understand hierarchical data structures
 
-Curated Coding Hints & Steps: Access comprehensive, progressive hints that guide you through intricate problems without giving away the full solution at once.
+#### **Advanced Level**
+- **Dynamic Programming** (20 questions) - Master optimization strategies
+- **Graphs** (16 questions) - Learn complex relationship algorithms
+- **Greedy & Backtracking** (18 questions) - Advanced problem-solving techniques
 
-Ready-to-Use Code Snippets: Benefit from a repository of verified code snippets for common problems, which can be copied and integrated into your own workflow.
+### 📊 Progress Tracking
+- **Completion Status**: Mark questions as done with visual feedback
+- **Progress Monitoring**: Track your advancement through topics
+- **Performance Analytics**: See your learning journey at a glance
+- **Persistent Storage**: Your progress is saved locally for continuity
 
-Smart Search & Filtering: Find hints, solutions, or code reviews using robust search and filtering tools by language, topic, or difficulty.
+### 🔍 Interview Preparation
+- **Company-Specific Questions**: Access questions from top tech companies
+- **Difficulty Progression**: Questions arranged from easy to hard
+- **Real-World Practice**: Prepare for actual technical interviews
+- **Focused Learning**: Target specific companies or topics
 
-(Private) Collaboration: Collaborate securely with team members, sharing hints or reviewing code in a trusted environment.
+## 🚀 Getting Started
 
-Example Use Case
-Paste your code: Use the built-in code space to input your current function or script.
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn package manager
 
-Get instant suggestions: Receive on-the-fly feedback, such as syntax corrections, optimization hints, or alternative approaches.
+### Installation
 
-Request a hint: If you’re stuck, unlock tailored hints that nudge you in the right direction—no spoilers unless you ask for the full solution!
+1. **Clone the Repository**
+   ```bash
+   git clone <your-repo-url>
+   cd Hint-Hub
+   ```
 
-Why Hint Hub?
-Boost Productivity: Reduce time spent stuck on bugs or design decisions with actionable, context-aware advice.
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-Improve Code Quality: Leverage automated suggestions to catch issues early and learn best practices.
+3. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
 
-Safe & Private: All data, hints, and interactions remain within your authorized team.
+4. **Access the Application**
+   Open your browser and navigate to `http://localhost:8080`
 
-How to Contribute or Edit Files
-There are two main ways to edit files in this project:
+### Configuration
+The application is pre-configured with:
+- **OpenRouter API**: AI-powered code analysis using Claude 3.5 Sonnet
+- **No Additional Setup**: Ready to use out of the box
+- **Secure Environment**: All interactions remain private and secure
 
-Edit a File Directly in GitHub
-Navigate to the desired file in the repository.
+## 🛠️ Technology Stack
 
-Click the "Edit" button (pencil icon) at the top right of the file view.
+- **Frontend**: React 18 with TypeScript
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Build Tool**: Vite for fast development and optimized builds
+- **AI Integration**: OpenRouter API with Claude 3.5 Sonnet
+- **State Management**: React hooks and localStorage for persistence
+- **Routing**: React Router for seamless navigation
 
-Make your changes.
+## 🎓 How It Works
 
-Commit and save the changes directly from the GitHub web interface.
+### 1. **Submit Your Problem**
+Users submit DSA problems or describe where they are struggling.
 
-Use GitHub Codespaces
-On the main page of your repository, click the "Code" button (green button).
+### 2. **Receive Intelligent Guidance**
+The AI responds with targeted hints and probing questions, encouraging users to reflect and try new approaches.
 
-Select the "Codespaces" tab.
+### 3. **Get Instant Feedback**
+Instant feedback supports learning without giving away solutions, focusing on developing strong thinking skills.
 
-Click "New codespace" to launch a dedicated development environment.
+### 4. **Track Your Progress**
+A customizable study plan lets users select interview questions and organize them as a to-do list. Questions are trackable - users can mark their completion and monitor their progress.
 
-Edit files directly within Codespaces, then commit and push your changes when done.
+### 5. **Practice with Focus**
+Each question is linked for quick access and focused practice, creating an ideal environment for learners and interview candidates.
+
+## 🎯 Perfect For
+
+- **Students**: Building strong DSA foundations
+- **Interview Candidates**: Preparing for technical interviews
+- **Self-Learners**: Developing problem-solving skills independently
+- **Bootcamp Participants**: Supplementing structured learning
+- **Career Changers**: Transitioning into software development
+
+## 🌟 Why Choose Hint Hub?
+
+### **Build Lasting Expertise**
+Develop genuine understanding through guided discovery, not just memorization.
+
+### **Adaptive Learning**
+AI adapts to your learning style and pace, providing personalized guidance.
+
+### **Comprehensive Coverage**
+176+ carefully curated questions across 10 major DSA topics.
+
+### **Interview-Ready**
+Practice with real questions from top tech companies.
+
+### **Progress Tracking**
+Monitor your advancement and celebrate your learning journey.
+
+## 🤝 Contributing
+
+We welcome contributions! Here are two ways to contribute:
+
+### **Direct GitHub Editing**
+1. Navigate to the desired file in the repository
+2. Click the "Edit" button (pencil icon)
+3. Make your changes
+4. Commit and save directly from GitHub
+
+### **Using GitHub Codespaces**
+1. Click the "Code" button on the main repository page
+2. Select the "Codespaces" tab
+3. Click "New codespace" to launch a development environment
+4. Edit files and commit your changes
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+- Check the documentation in this README
+- Review the code comments for implementation details
+- Open an issue on GitHub for bugs or feature requests
+
+---
+
+<div align="center">
+  **Ready to master DSA? Start your learning journey with Hint Hub today! 🚀**
+</div>

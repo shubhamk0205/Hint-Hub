@@ -18,14 +18,14 @@ const HomePage = () => {
   const features = [
     {
       icon: Code,
-      title: "Code Space Suggestions",
-      description: "Paste your code and receive intelligent suggestions, bug detection, and optimization tips.",
+      title: "AI-Powered Learning Assistant",
+      description: "Get targeted hints, probing questions, and instant feedback to guide your problem-solving journey.",
       link: "/code-space"
     },
     {
       icon: BookOpen,
-      title: "Study Plans",
-      description: "Browse curated study plans with practice questions and track your progress.",
+      title: "Comprehensive Study Plans",
+      description: "Master DSA with 176+ curated questions across 10 topics, from beginner to advanced.",
       link: "/study-plans"
     }
   ];
@@ -33,18 +33,18 @@ const HomePage = () => {
   const benefits = [
     {
       icon: Zap,
-      title: "Boost Productivity",
-      description: "Reduce time spent stuck on bugs with actionable, context-aware advice."
+      title: "Build Lasting Expertise",
+      description: "Develop genuine understanding through guided discovery, not just memorization."
     },
     {
       icon: Target,
-      title: "Improve Code Quality",
-      description: "Catch issues early and learn best practices with automated suggestions."
+      title: "Interview-Ready Skills",
+      description: "Practice with real questions from top tech companies and track your progress."
     },
     {
       icon: Shield,
-      title: "Safe & Private",
-      description: "All data and interactions remain secure within your authorized team."
+      title: "Adaptive Learning",
+      description: "AI adapts to your learning style and pace, providing personalized guidance."
     }
   ];
 
@@ -78,21 +78,21 @@ const HomePage = () => {
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl sm:text-6xl font-bold mb-6">
-            Accelerate Your{" "}
-            <span className="text-primary">Development</span>{" "}
-            Workflow
+            Master{" "}
+            <span className="text-primary">DSA</span>{" "}
+            Through Intelligent Guidance
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Hint Hub provides code analysis, suggestions, and curated study plans 
-            to help you solve complex problems faster and learn better.
+            AI-powered platform that delivers hints, guiding questions, and instant feedback 
+            to foster problem-solving and deeper understanding of Data Structures & Algorithms.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="flex items-center gap-2" onClick={() => handleProtectedNavigation("/code-space")}> 
-              Start Coding
+              Start Learning
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="lg" onClick={() => handleProtectedNavigation("/study-plans")}> 
-              Browse Study Plans
+              Explore Study Plans
             </Button>
           </div>
         </div>
@@ -104,7 +104,7 @@ const HomePage = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Key Features</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to accelerate your programming workflow and foster learning.
+              Everything you need to master Data Structures & Algorithms through intelligent guidance.
             </p>
           </div>
           {user && (
