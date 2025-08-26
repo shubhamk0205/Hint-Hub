@@ -1,6 +1,6 @@
 // OpenRouter API utility for Hint Hub
 
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "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";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Rate limiting configuration

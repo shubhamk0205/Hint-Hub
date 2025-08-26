@@ -62,10 +62,31 @@ const HomePage = () => {
     if (!auth.currentUser) {
       try {
         const provider = new GoogleAuthProvider();
+        console.log("Attempting Google sign-in...");
+        console.log("Firebase config:", {
+          apiKey: import.meta.env.VITE_FIREBASE_API_KEY ? "Set" : "Not set",
+          authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? "Set" : "Not set",
+          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ? "Set" : "Not set"
+        });
         await signInWithPopup(auth, provider);
+        console.log("Sign-in successful!");
         navigate(path);
       } catch (error) {
-        alert("Sign-in failed. Please try again.");
+        console.error("Sign-in error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        
+        let errorMessage = "Sign-in failed. Please try again.";
+        
+        if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = "This domain is not authorized for sign-in. Please contact support.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = "Sign-in was cancelled. Please try again.";
+        } else if (error.code === 'auth/popup-blocked') {
+          errorMessage = "Sign-in popup was blocked. Please allow popups and try again.";
+        }
+        
+        alert(errorMessage);
       }
     } else {
       navigate(path);
