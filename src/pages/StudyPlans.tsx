@@ -29,6 +29,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { loadPlaylistProgress, saveQuestionProgress, loadStudyPlanProgress, saveStudyPlanProgress } from "@/lib/playlistProgress";
 
 interface Question {
   id: string;
@@ -84,83 +85,96 @@ const StudyPlans = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Load playlists with completion status from localStorage
+  // Load playlists with completion status from Supabase
   useEffect(() => {
-    const loadPlaylistsWithProgress = () => {
-      const updatedPlaylists = interviewPlaylists.map(playlist => {
-        const savedProgress = localStorage.getItem(`playlist-${playlist.id}`);
-        if (savedProgress) {
-          const progress = JSON.parse(savedProgress);
-          
-          // Update questions with saved completion status
-          const updatedTopics = { ...playlist.topics };
-          Object.keys(updatedTopics).forEach(topicKey => {
-            Object.keys(updatedTopics[topicKey]).forEach(difficultyKey => {
-              updatedTopics[topicKey][difficultyKey as keyof typeof updatedTopics[typeof topicKey]] = 
-                updatedTopics[topicKey][difficultyKey as keyof typeof updatedTopics[typeof topicKey]].map(q => ({
-                  ...q,
-                  completed: progress[q.id] || false
-                }));
-            });
-          });
-          
-          // Calculate completed questions count
-          let completedCount = 0;
-          Object.values(updatedTopics).forEach(difficultyGroups => {
-            Object.values(difficultyGroups).forEach(questions => {
-              questions.forEach(q => {
-                if (q.completed) completedCount++;
+    const loadPlaylistsWithProgress = async () => {
+      try {
+        const updatedPlaylists = await Promise.all(
+          interviewPlaylists.map(async (playlist) => {
+            const progress = await loadPlaylistProgress(playlist.id);
+            
+            if (Object.keys(progress).length > 0) {
+              // Update questions with saved completion status
+              const updatedTopics = { ...playlist.topics };
+              Object.keys(updatedTopics).forEach(topicKey => {
+                Object.keys(updatedTopics[topicKey]).forEach(difficultyKey => {
+                  updatedTopics[topicKey][difficultyKey as keyof typeof updatedTopics[typeof topicKey]] = 
+                    updatedTopics[topicKey][difficultyKey as keyof typeof updatedTopics[typeof topicKey]].map(q => ({
+                      ...q,
+                      completed: progress[q.id] || false
+                    }));
+                });
               });
-            });
-          });
-          
-          return {
-            ...playlist,
-            topics: updatedTopics,
-            completedQuestions: completedCount
-          };
-        }
-        return playlist;
-      });
-      
-      setPlaylists(updatedPlaylists);
+              
+              // Calculate completed questions count
+              let completedCount = 0;
+              Object.values(updatedTopics).forEach(difficultyGroups => {
+                Object.values(difficultyGroups).forEach(questions => {
+                  questions.forEach(q => {
+                    if (q.completed) completedCount++;
+                  });
+                });
+              });
+              
+              return {
+                ...playlist,
+                topics: updatedTopics,
+                completedQuestions: completedCount
+              };
+            }
+            return playlist;
+          })
+        );
+        
+        setPlaylists(updatedPlaylists);
+      } catch (error) {
+        console.error('Error loading playlist progress:', error);
+        // Fallback to original playlists if there's an error
+        setPlaylists(interviewPlaylists);
+      }
     };
     
     loadPlaylistsWithProgress();
   }, []);
 
-  // Load study plans with completion status from localStorage
+  // Load study plans with completion status from Supabase
   useEffect(() => {
-    const loadStudyPlansWithProgress = () => {
-      const updatedStudyPlans = studyPlans.map(plan => {
-        const savedProgress = localStorage.getItem(`study-plan-${plan.id}`);
-        if (savedProgress) {
-          const progress = JSON.parse(savedProgress);
-          
-          // Update questions with saved completion status
-          const updatedTopics = plan.topics.map(topic => ({
-            ...topic,
-            questions: topic.questions.map(q => ({
-              ...q,
-              completed: progress[q.id] || false
-            }))
-          }));
-          
-          // Calculate completed questions count
-          const completedCount = updatedTopics.reduce((total, topic) => 
-            total + topic.questions.filter(q => q.completed).length, 0
-          );
-          
-          return {
-            ...plan,
-            topics: updatedTopics,
-            completedQuestions: completedCount
-          };
-        }
-        return plan;
-      });
-      
-      setStudyPlansWithProgress(updatedStudyPlans);
+    const loadStudyPlansWithProgress = async () => {
+      try {
+        const updatedStudyPlans = await Promise.all(
+          studyPlans.map(async (plan) => {
+            const progress = await loadStudyPlanProgress(plan.id);
+            
+            if (Object.keys(progress).length > 0) {
+              // Update questions with saved completion status
+              const updatedTopics = plan.topics.map(topic => ({
+                ...topic,
+                questions: topic.questions.map(q => ({
+                  ...q,
+                  completed: progress[q.id] || false
+                }))
+              }));
+              
+              // Calculate completed questions count
+              const completedCount = updatedTopics.reduce((total, topic) => 
+                total + topic.questions.filter(q => q.completed).length, 0
+              );
+              
+              return {
+                ...plan,
+                topics: updatedTopics,
+                completedQuestions: completedCount
+              };
+            }
+            return plan;
+          })
+        );
+        
+        setStudyPlansWithProgress(updatedStudyPlans);
+      } catch (error) {
+        console.error('Error loading study plan progress:', error);
+        setStudyPlansWithProgress(studyPlans); // Fallback
+      }
     };
     
     loadStudyPlansWithProgress();
@@ -852,7 +866,7 @@ const StudyPlans = () => {
     setSelectedPlaylist(updatedPlaylist);
   };
 
-  const handleStudyPlanQuestionToggle = (questionId: string, isCompleted: boolean) => {
+  const handleStudyPlanQuestionToggle = async (questionId: string, isCompleted: boolean) => {
     if (!selectedPlan) return;
 
     // Update the plan state
@@ -879,14 +893,17 @@ const StudyPlans = () => {
       )
     );
     
-    // Save progress to localStorage
-    const progress = {};
-    updatedPlan.topics.forEach(topic => {
-      topic.questions.forEach(q => {
-        progress[q.id] = q.completed;
+    // Save progress to Supabase
+    const saveSuccess = await saveStudyPlanProgress(selectedPlan.id, questionId, isCompleted);
+    
+    if (!saveSuccess) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
       });
-    });
-    localStorage.setItem(`study-plan-${selectedPlan.id}`, JSON.stringify(progress));
+      return;
+    }
     
     // Show toast for feedback
     toast({
@@ -895,7 +912,7 @@ const StudyPlans = () => {
     });
   };
 
-  const handleQuestionToggle = (questionId: string, isCompleted: boolean) => {
+  const handleQuestionToggle = async (questionId: string, isCompleted: boolean) => {
     if (!selectedPlaylist) return;
 
     // Update the playlist state
@@ -935,16 +952,17 @@ const StudyPlans = () => {
       )
     );
     
-    // Save progress to localStorage
-    const progress = {};
-    Object.values(updatedTopics).forEach(difficultyGroups => {
-      Object.values(difficultyGroups).forEach(questions => {
-        questions.forEach(q => {
-          progress[q.id] = q.completed;
-        });
+    // Save progress to Supabase
+    const saveSuccess = await saveQuestionProgress(selectedPlaylist.id, questionId, isCompleted);
+    
+    if (!saveSuccess) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
       });
-    });
-    localStorage.setItem(`playlist-${selectedPlaylist.id}`, JSON.stringify(progress));
+      return;
+    }
     
     // Show toast for feedback
     toast({
@@ -1258,6 +1276,8 @@ Can you help me understand the problem and provide a solution approach?`;
             Choose between structured learning paths or curated interview practice.
           </p>
         </div>
+
+
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">

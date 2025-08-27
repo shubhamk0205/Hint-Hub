@@ -16,6 +16,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import { loadStudyPlanProgress, saveStudyPlanProgress } from "@/lib/playlistProgress";
 
 const StudyPlanDetail = () => {
   const { planId } = useParams();
@@ -81,22 +82,30 @@ const StudyPlanDetail = () => {
   ];
 
   useEffect(() => {
-    const plan = studyPlans.find(p => p.id === parseInt(planId || "0"));
-    if (plan) {
-      // Load saved progress from localStorage
-      const savedProgress = localStorage.getItem(`study-plan-${planId}`);
-      if (savedProgress) {
-        const progress = JSON.parse(savedProgress);
-        plan.questions = plan.questions.map(q => ({
-          ...q,
-          completed: progress[q.id] || false
-        }));
+    const loadPlanWithProgress = async () => {
+      const plan = studyPlans.find(p => p.id === parseInt(planId || "0"));
+      if (plan) {
+        try {
+          // Load saved progress from Supabase
+          const progress = await loadStudyPlanProgress(planId || "");
+          if (Object.keys(progress).length > 0) {
+            plan.questions = plan.questions.map(q => ({
+              ...q,
+              completed: progress[q.id] || false
+            }));
+          }
+          setStudyPlan(plan);
+        } catch (error) {
+          console.error('Error loading study plan progress:', error);
+          setStudyPlan(plan); // Fallback to plan without progress
+        }
       }
-      setStudyPlan(plan);
-    }
+    };
+    
+    loadPlanWithProgress();
   }, [planId]);
 
-  const handleQuestionToggle = (questionId: number, completed: boolean) => {
+  const handleQuestionToggle = async (questionId: number, completed: boolean) => {
     if (!studyPlan) return;
 
     const updatedQuestions = studyPlan.questions.map((q: any) =>
@@ -106,12 +115,17 @@ const StudyPlanDetail = () => {
     const updatedPlan = { ...studyPlan, questions: updatedQuestions };
     setStudyPlan(updatedPlan);
 
-    // Save progress to localStorage
-    const progress = updatedQuestions.reduce((acc: any, q: any) => {
-      acc[q.id] = q.completed;
-      return acc;
-    }, {});
-    localStorage.setItem(`study-plan-${planId}`, JSON.stringify(progress));
+    // Save progress to Supabase
+    const saveSuccess = await saveStudyPlanProgress(planId || "", questionId.toString(), completed);
+    
+    if (!saveSuccess) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Show toast for feedback
     toast({
