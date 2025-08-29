@@ -96,7 +96,14 @@ The AI assistant now follows a structured three-stage problem-solving approach:
 2. **Algorithm Design Stage**: Develops clear algorithms with reasoning and step-by-step plans
 3. **Implementation Stage**: Writes clean, well-commented code that matches requirements
 
-This structured approach ensures comprehensive problem-solving while maintaining the conversational, hint-based guidance that encourages user learning.
+**Enhanced Learning-Focused Approach:**
+- **Plain English First**: Always starts with clear explanations in simple English
+- **Code on Demand**: Only provides code when explicitly requested by the user
+- **Specific Code Parts**: When code is requested, shows only the relevant parts that need correction or implementation
+- **Understanding Focus**: Prioritizes helping users understand concepts before jumping to code
+- **Self-Discovery**: Encourages users to think through solutions themselves
+
+This structured approach ensures comprehensive problem-solving while maintaining an educational, step-by-step learning experience.
 
 ## Usage Examples
 
