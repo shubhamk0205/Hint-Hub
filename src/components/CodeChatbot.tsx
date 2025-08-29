@@ -194,6 +194,16 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
     }
   };
 
+  // Function to get message bubble width class based on content length
+  const getMessageWidthClass = (content: string) => {
+    const length = content.length;
+    if (length <= 20) return 'w-fit max-w-[200px]';
+    if (length <= 50) return 'w-fit max-w-[300px]';
+    if (length <= 100) return 'w-fit max-w-[400px]';
+    if (length <= 200) return 'w-fit max-w-[500px]';
+    return 'w-fit max-w-[600px]';
+  };
+
   return (
     <Card className="h-[600px] flex flex-col">
       <CardHeader className="pb-3 flex-shrink-0">
@@ -241,15 +251,15 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <div
-                    className={`p-3 rounded-lg ${
-                      message.type === 'user'
-                        ? 'bg-primary text-primary-foreground ml-auto'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                  </div>
+                                     <div
+                     className={`p-3 rounded-lg ${
+                       message.type === 'user'
+                         ? `bg-primary text-primary-foreground ml-auto ${getMessageWidthClass(message.content)}`
+                         : 'bg-muted'
+                     }`}
+                   >
+                                           <div className="text-sm whitespace-pre-wrap text-left">{message.content}</div>
+                   </div>
                 </div>
               </div>
             ))}
