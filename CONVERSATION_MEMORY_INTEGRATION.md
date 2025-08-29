@@ -75,7 +75,7 @@ interface ConversationMessage {
 {
   model: "openai/gpt-3.5-turbo",
   messages: [
-    { role: "system", content: "System prompt..." },
+    { role: "system", content: "System prompt with three-stage problem-solving approach..." },
     { role: "user", content: "Previous user message 1" },
     { role: "assistant", content: "Previous assistant response 1" },
     { role: "user", content: "Previous user message 2" },
@@ -87,6 +87,16 @@ interface ConversationMessage {
   top_p: 0.95
 }
 ```
+
+### System Prompt Features
+
+The AI assistant now follows a structured three-stage problem-solving approach:
+
+1. **Understanding Stage**: Analyzes and summarizes the question, identifying requirements and constraints
+2. **Algorithm Design Stage**: Develops clear algorithms with reasoning and step-by-step plans
+3. **Implementation Stage**: Writes clean, well-commented code that matches requirements
+
+This structured approach ensures comprehensive problem-solving while maintaining the conversational, hint-based guidance that encourages user learning.
 
 ## Usage Examples
 
