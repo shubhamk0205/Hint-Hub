@@ -8,3 +8,4 @@ GRANT USAGE, SELECT ON SEQUENCE playlist_progress_id_seq TO anon;
 
 -- Grant permissions on the view
 GRANT SELECT ON playlist_progress_summary TO anon;
+

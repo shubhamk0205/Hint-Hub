@@ -12,9 +12,11 @@ import {
   Lightbulb,
   Code,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from "lucide-react";
 import { getOpenRouterResponse } from "@/lib/openrouter";
+import { generateSessionId, getMemoryManager, clearSessionMemory } from "@/lib/conversation-memory";
 
 interface Message {
   id: string;
@@ -42,7 +44,30 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
+  const [memoryInfo, setMemoryInfo] = useState<{ messageCount: number; sessionId: string } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Initialize session ID on component mount
+  useEffect(() => {
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId);
+    console.log("🆔 New conversation session started:", newSessionId);
+  }, []);
+
+  // Function to update memory info
+  const updateMemoryInfo = async () => {
+    if (sessionId) {
+      const memoryManager = getMemoryManager(sessionId);
+      const summary = await memoryManager.getSummary();
+      setMemoryInfo(summary);
+    }
+  };
+
+  // Update memory info when messages change
+  useEffect(() => {
+    updateMemoryInfo();
+  }, [messages, sessionId]);
 
   const initialQuestions = [
     "Unable to understand the problem",
@@ -87,12 +112,13 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
     setIsTyping(true);
 
     try {
-      // OpenRouter API call
+      // OpenRouter API call with session ID for conversation memory
       const botContent = await getOpenRouterResponse({
         userMessage: input,
         code,
         language,
-        question
+        question,
+        sessionId
       });
       
       const botMessage: Message = {
@@ -130,6 +156,26 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
     }
   };
 
+  const handleClearConversation = async () => {
+    if (sessionId) {
+      // Clear the session memory completely
+      clearSessionMemory(sessionId);
+      
+      // Reset messages to initial state
+      setMessages([
+        {
+          id: Date.now().toString(),
+          type: 'bot',
+          content: "Hi! I'm your DSA and backend coding assistant. I specialize in Data Structures & Algorithms, Express.js, and MySQL. Feel free to ask me about algorithms, optimization, database queries, or Express routes!",
+          timestamp: new Date(),
+          messageType: 'general'
+        }
+      ]);
+      
+      console.log("🗑️ Conversation history cleared for session:", sessionId);
+    }
+  };
+
   const getMessageIcon = (messageType?: string) => {
     switch (messageType) {
       case 'hint': return <Lightbulb className="h-4 w-4 text-accent" />;
@@ -151,9 +197,28 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   return (
     <Card className="h-[600px] flex flex-col">
       <CardHeader className="pb-3 flex-shrink-0">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Bot className="h-5 w-5 text-primary" />
-          Code Assistant
+        <CardTitle className="flex items-center justify-between text-lg">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-primary" />
+            Code Assistant
+          </div>
+          <div className="flex items-center gap-2">
+            {memoryInfo && (
+              <span className="text-xs text-muted-foreground">
+                Memory: {memoryInfo.messageCount} messages
+              </span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearConversation}
+              className="text-xs"
+              title="Clear conversation history"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 min-h-0">

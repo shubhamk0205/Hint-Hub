@@ -1,5 +1,7 @@
 // OpenRouter API utility for Hint Hub
 
+import { getMemoryManager, ConversationMemoryManager } from './conversation-memory';
+
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "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";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -27,7 +29,19 @@ const rateLimit = async () => {
   lastRequestTime = Date.now();
 };
 
-export async function getOpenRouterResponse({ userMessage, code, language, question }: { userMessage: string; code: string; language: string; question: string; }): Promise<string> {
+export async function getOpenRouterResponse({ 
+  userMessage, 
+  code, 
+  language, 
+  question, 
+  sessionId = 'default' 
+}: { 
+  userMessage: string; 
+  code: string; 
+  language: string; 
+  question: string; 
+  sessionId?: string;
+}): Promise<string> {
   // Check if API key is available
   if (!OPENROUTER_API_KEY) {
     console.error("OpenRouter API key not found.");
@@ -39,10 +53,14 @@ export async function getOpenRouterResponse({ userMessage, code, language, quest
   console.log("API Key length:", OPENROUTER_API_KEY?.length || 0);
   console.log("Running in browser:", typeof window !== 'undefined');
 
+  // Get memory manager for this session
+  const memoryManager = getMemoryManager(sessionId);
+  
   // Check if user provided code and question
   const hasCode = code && code.trim().length > 0;
   const hasQuestion = question && question.trim().length > 0;
   
+  // Construct the current user message with context
   let userContent = `PROBLEM CONTEXT:
 Language: ${language}
 
@@ -77,6 +95,9 @@ ${userMessage}
     userContent += 'Please start by checking if they understand the question and offer initial guidance if needed.';
   }
 
+  // Add current user message to memory
+  await memoryManager.addMessage('user', userContent);
+
   // Implement rate limiting
   await rateLimit();
 
@@ -87,18 +108,12 @@ ${userMessage}
     try {
       console.log(`📡 Attempt ${attempt}/${maxRetries} - Making API request...`);
       
-       const requestBody = {
-         model: "openai/gpt-3.5-turbo", // Using a more cost-effective model
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT
-          },
-          {
-            role: "user",
-            content: userContent
-          }
-        ],
+      // Get conversation history and construct messages
+      const messages = await memoryManager.getOpenRouterMessages(SYSTEM_PROMPT, userContent);
+      
+      const requestBody = {
+        model: "openai/gpt-3.5-turbo", // Using a more cost-effective model
+        messages: messages,
         max_tokens: 2048,
         temperature: 0.7,
         top_p: 0.95
@@ -203,6 +218,16 @@ ${userMessage}
       }
 
       console.log("✅ Successfully received response from OpenRouter API");
+      
+      // Save assistant response to memory
+      await memoryManager.addMessage('assistant', responseText);
+      
+      // Check if we need to truncate history to prevent oversized requests
+      if (await memoryManager.shouldTruncate()) {
+        console.log("📝 Truncating conversation history to prevent oversized requests");
+        await memoryManager.truncateHistory();
+      }
+      
       return responseText;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
