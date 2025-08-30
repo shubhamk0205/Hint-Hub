@@ -833,13 +833,96 @@ const StudyPlans = () => {
     }
   ];
 
-  const filteredPlans = studyPlans.filter(plan => {
+  const filteredPlans = (studyPlansWithProgress.length > 0 ? studyPlansWithProgress : studyPlans).filter(plan => {
     const matchesSearch = plan.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          plan.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || plan.id.includes(selectedCategory);
+    
+    // Fix category matching logic
+    let matchesCategory = true;
+    if (selectedCategory !== "all") {
+      switch (selectedCategory) {
+        case "arrays":
+          matchesCategory = plan.id === "arrays-mastery";
+          break;
+        case "strings":
+          matchesCategory = plan.id === "strings-mastery";
+          break;
+        case "stacks-queues":
+          matchesCategory = plan.id === "stacks-queues-mastery";
+          break;
+        case "sorting-searching":
+          matchesCategory = plan.id === "sorting-searching-mastery";
+          break;
+        case "two-pointers-sliding-window":
+          matchesCategory = plan.id === "two-pointers-sliding-window-mastery";
+          break;
+        case "linked-lists":
+          matchesCategory = plan.id === "linked-lists-mastery";
+          break;
+        case "trees":
+          matchesCategory = plan.id === "trees-mastery";
+          break;
+        case "dynamic-programming":
+          matchesCategory = plan.id === "dynamic-programming-mastery";
+          break;
+        case "graphs":
+          matchesCategory = plan.id === "graphs-mastery";
+          break;
+        case "greedy-backtracking":
+          matchesCategory = plan.id === "greedy-backtracking-mastery";
+          break;
+        default:
+          matchesCategory = true;
+      }
+    }
+    
     const matchesDifficulty = selectedDifficulty === "all" || plan.difficulty.toLowerCase() === selectedDifficulty;
     
     return matchesSearch && matchesCategory && matchesDifficulty;
+  });
+
+  // Add sorting functionality
+  const [sortBy, setSortBy] = useState("default");
+  const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
+  const [playlistSortBy, setPlaylistSortBy] = useState("default");
+  
+  const sortedPlans = [...filteredPlans].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return a.title.localeCompare(b.title);
+      case "difficulty":
+        const difficultyOrder = { "Beginner": 1, "Intermediate": 2, "Advanced": 3 };
+        return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+      case "progress":
+        const progressA = (a.completedQuestions / a.totalQuestions) * 100;
+        const progressB = (b.completedQuestions / b.totalQuestions) * 100;
+        return progressB - progressA; // Sort by highest progress first
+      case "questions":
+        return a.totalQuestions - b.totalQuestions;
+      default:
+        return 0; // Default order (as defined in the array)
+    }
+  });
+
+  // Filter and sort playlists
+  const filteredPlaylists = (playlists.length > 0 ? playlists : interviewPlaylists).filter(playlist => {
+    return playlist.title.toLowerCase().includes(playlistSearchQuery.toLowerCase()) ||
+           playlist.description.toLowerCase().includes(playlistSearchQuery.toLowerCase());
+  });
+
+  const sortedPlaylists = [...filteredPlaylists].sort((a, b) => {
+    switch (playlistSortBy) {
+      case "name":
+        return a.title.localeCompare(b.title);
+      case "progress":
+        const progressA = calculatePlaylistProgress(a);
+        const progressB = calculatePlaylistProgress(b);
+        return progressB - progressA; // Sort by highest progress first
+      case "questions":
+        return a.totalQuestions - b.totalQuestions;
+      default:
+        return 0; // Default order (as defined in the array)
+    }
   });
 
   const getDifficultyColor = (difficulty: string) => {
@@ -1042,6 +1125,21 @@ Can you help me understand the problem and provide a solution approach?`;
 
   // If a plan is selected, show its topics and questions
   if (selectedPlan) {
+    const [questionSearchQuery, setQuestionSearchQuery] = useState("");
+    const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState("all");
+    
+    // Filter questions based on search and difficulty
+    const filteredTopics = selectedPlan.topics.map(topic => ({
+      ...topic,
+      questions: topic.questions.filter(question => {
+        const matchesSearch = question.title.toLowerCase().includes(questionSearchQuery.toLowerCase()) ||
+                             question.topic.toLowerCase().includes(questionSearchQuery.toLowerCase());
+        const matchesDifficulty = questionDifficultyFilter === "all" || 
+                                 question.difficulty.toLowerCase() === questionDifficultyFilter;
+        return matchesSearch && matchesDifficulty;
+      })
+    })).filter(topic => topic.questions.length > 0);
+
     return (
       <div className="min-h-screen p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
@@ -1067,8 +1165,32 @@ Can you help me understand the problem and provide a solution approach?`;
             </div>
           </div>
 
+          {/* Search and filter controls */}
+          <div className="mb-6 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search questions..."
+                value={questionSearchQuery}
+                onChange={(e) => setQuestionSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={questionDifficultyFilter} onValueChange={setQuestionDifficultyFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Difficulties</SelectItem>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-6">
-            {selectedPlan.topics.map((topic) => (
+            {filteredTopics.map((topic) => (
               <Card key={topic.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -1145,6 +1267,40 @@ Can you help me understand the problem and provide a solution approach?`;
 
   // If a playlist is selected, show its questions organized by topic and difficulty
   if (selectedPlaylist) {
+    const [playlistQuestionSearchQuery, setPlaylistQuestionSearchQuery] = useState("");
+    const [playlistQuestionDifficultyFilter, setPlaylistQuestionDifficultyFilter] = useState("all");
+    
+    // Filter questions based on search and difficulty
+    const filteredPlaylistTopics = Object.entries(selectedPlaylist.topics).map(([topicName, difficultyGroups]) => {
+      const filteredDifficultyGroups = {
+        Easy: difficultyGroups.Easy.filter(question => {
+          const matchesSearch = question.title.toLowerCase().includes(playlistQuestionSearchQuery.toLowerCase()) ||
+                               question.topic.toLowerCase().includes(playlistQuestionSearchQuery.toLowerCase());
+          const matchesDifficulty = playlistQuestionDifficultyFilter === "all" || 
+                                   playlistQuestionDifficultyFilter === "easy";
+          return matchesSearch && matchesDifficulty;
+        }),
+        Medium: difficultyGroups.Medium.filter(question => {
+          const matchesSearch = question.title.toLowerCase().includes(playlistQuestionSearchQuery.toLowerCase()) ||
+                               question.topic.toLowerCase().includes(playlistQuestionSearchQuery.toLowerCase());
+          const matchesDifficulty = playlistQuestionDifficultyFilter === "all" || 
+                                   playlistQuestionDifficultyFilter === "medium";
+          return matchesSearch && matchesDifficulty;
+        }),
+        Hard: difficultyGroups.Hard.filter(question => {
+          const matchesSearch = question.title.toLowerCase().includes(playlistQuestionSearchQuery.toLowerCase()) ||
+                               question.topic.toLowerCase().includes(playlistQuestionSearchQuery.toLowerCase());
+          const matchesDifficulty = playlistQuestionDifficultyFilter === "all" || 
+                                   playlistQuestionDifficultyFilter === "hard";
+          return matchesSearch && matchesDifficulty;
+        })
+      };
+      
+      return [topicName, filteredDifficultyGroups] as [string, { Easy: Question[]; Medium: Question[]; Hard: Question[] }];
+    }).filter(([topicName, difficultyGroups]) => 
+      difficultyGroups.Easy.length > 0 || difficultyGroups.Medium.length > 0 || difficultyGroups.Hard.length > 0
+    );
+
     return (
       <div className="min-h-screen p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
@@ -1168,8 +1324,32 @@ Can you help me understand the problem and provide a solution approach?`;
             </div>
           </div>
 
+          {/* Search and filter controls */}
+          <div className="mb-6 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search questions..."
+                value={playlistQuestionSearchQuery}
+                onChange={(e) => setPlaylistQuestionSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={playlistQuestionDifficultyFilter} onValueChange={setPlaylistQuestionDifficultyFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Difficulties</SelectItem>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-8">
-            {Object.entries(selectedPlaylist.topics).map(([topicName, difficultyGroups]) => (
+            {filteredPlaylistTopics.map(([topicName, difficultyGroups]) => (
               <Card key={topicName}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -1327,10 +1507,22 @@ Can you help me understand the problem and provide a solution approach?`;
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default Order</SelectItem>
+                  <SelectItem value="name">Sort by Name</SelectItem>
+                  <SelectItem value="difficulty">Sort by Difficulty</SelectItem>
+                  <SelectItem value="progress">Sort by Progress</SelectItem>
+                  <SelectItem value="questions">Sort by Question Count</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(studyPlansWithProgress.length > 0 ? studyPlansWithProgress : filteredPlans).map((plan) => {
+              {sortedPlans.map((plan) => {
                 const progressPercentage = (plan.completedQuestions / plan.totalQuestions) * 100;
                 
                 return (
@@ -1386,8 +1578,31 @@ Can you help me understand the problem and provide a solution approach?`;
 
           {/* Practice Section */}
           <TabsContent value="practice" className="space-y-6">
+            <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search practice playlists..."
+                  value={playlistSearchQuery}
+                  onChange={(e) => setPlaylistSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={playlistSortBy} onValueChange={setPlaylistSortBy}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default Order</SelectItem>
+                  <SelectItem value="name">Sort by Name</SelectItem>
+                  <SelectItem value="progress">Sort by Progress</SelectItem>
+                  <SelectItem value="questions">Sort by Question Count</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {(playlists.length > 0 ? playlists : interviewPlaylists).map((playlist) => {
+              {sortedPlaylists.map((playlist) => {
                 const progressPercentage = calculatePlaylistProgress(playlist);
                 
                 return (
