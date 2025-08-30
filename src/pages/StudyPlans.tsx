@@ -1213,13 +1213,17 @@ Can you help me understand the problem and provide a solution approach?`;
                     {topic.questions.map((question) => (
                       <div 
                         key={question.id} 
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => handleOpenLeetCode(question.leetcodeUrl)}
                       >
                         <div className="flex items-center gap-3 flex-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleStudyPlanQuestionToggle(question.id, !question.completed)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStudyPlanQuestionToggle(question.id, !question.completed);
+                            }}
                           >
                             {question.completed ? (
                               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1242,7 +1246,10 @@ Can you help me understand the problem and provide a solution approach?`;
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleGetHelp(question)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGetHelp(question);
+                            }}
                             className="flex items-center gap-1"
                           >
                             <HelpCircle className="h-3 w-3" />
@@ -1251,7 +1258,10 @@ Can you help me understand the problem and provide a solution approach?`;
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenLeetCode(question.leetcodeUrl)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenLeetCode(question.leetcodeUrl);
+                            }}
                             className="flex items-center gap-1"
                           >
                             <ExternalLink className="h-3 w-3" />
@@ -1393,13 +1403,17 @@ Can you help me understand the problem and provide a solution approach?`;
                             {questions.map((question) => (
                               <div 
                                 key={question.id} 
-                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                                onClick={() => handleOpenLeetCode(question.leetcodeUrl)}
                               >
                                 <div className="flex items-center gap-3 flex-1">
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleQuestionToggle(question.id, !question.completed)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleQuestionToggle(question.id, !question.completed);
+                                    }}
                                   >
                                     {question.completed ? (
                                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1417,7 +1431,10 @@ Can you help me understand the problem and provide a solution approach?`;
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleGetHelp(question)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleGetHelp(question);
+                                    }}
                                     className="flex items-center gap-1"
                                   >
                                     <HelpCircle className="h-3 w-3" />
@@ -1426,7 +1443,10 @@ Can you help me understand the problem and provide a solution approach?`;
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleOpenLeetCode(question.leetcodeUrl)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenLeetCode(question.leetcodeUrl);
+                                    }}
                                     className="flex items-center gap-1"
                                   >
                                     <ExternalLink className="h-3 w-3" />
