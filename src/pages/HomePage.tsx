@@ -13,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import Footer from "@/components/Footer";
 
 const HomePage = () => {
   const features = [
@@ -172,6 +173,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
