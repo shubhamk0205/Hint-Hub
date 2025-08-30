@@ -82,6 +82,18 @@ const StudyPlans = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [studyPlansWithProgress, setStudyPlansWithProgress] = useState<StudyPlan[]>([]);
+  
+  // Add sorting functionality
+  const [sortBy, setSortBy] = useState("default");
+  const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
+  const [playlistSortBy, setPlaylistSortBy] = useState("default");
+  
+  // Question search states
+  const [questionSearchQuery, setQuestionSearchQuery] = useState("");
+  const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState("all");
+  const [playlistQuestionSearchQuery, setPlaylistQuestionSearchQuery] = useState("");
+  const [playlistQuestionDifficultyFilter, setPlaylistQuestionDifficultyFilter] = useState("all");
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -881,11 +893,6 @@ const StudyPlans = () => {
     return matchesSearch && matchesCategory && matchesDifficulty;
   });
 
-  // Add sorting functionality
-  const [sortBy, setSortBy] = useState("default");
-  const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
-  const [playlistSortBy, setPlaylistSortBy] = useState("default");
-  
   const sortedPlans = [...filteredPlans].sort((a, b) => {
     switch (sortBy) {
       case "name":
@@ -1125,8 +1132,6 @@ Can you help me understand the problem and provide a solution approach?`;
 
   // If a plan is selected, show its topics and questions
   if (selectedPlan) {
-    const [questionSearchQuery, setQuestionSearchQuery] = useState("");
-    const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState("all");
     
     // Filter questions based on search and difficulty
     const filteredTopics = selectedPlan.topics.map(topic => ({
@@ -1267,8 +1272,6 @@ Can you help me understand the problem and provide a solution approach?`;
 
   // If a playlist is selected, show its questions organized by topic and difficulty
   if (selectedPlaylist) {
-    const [playlistQuestionSearchQuery, setPlaylistQuestionSearchQuery] = useState("");
-    const [playlistQuestionDifficultyFilter, setPlaylistQuestionDifficultyFilter] = useState("all");
     
     // Filter questions based on search and difficulty
     const filteredPlaylistTopics = Object.entries(selectedPlaylist.topics).map(([topicName, difficultyGroups]) => {
