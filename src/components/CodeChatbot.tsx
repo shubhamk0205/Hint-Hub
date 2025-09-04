@@ -308,7 +308,7 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
                       <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Thinking... (This may take a moment due to rate limiting)
+                      Thinking...
                     </div>
                   </div>
                 </div>
