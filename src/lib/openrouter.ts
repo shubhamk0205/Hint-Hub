@@ -129,7 +129,7 @@ ${userMessage}
       const messages = await memoryManager.getOpenRouterMessages(SYSTEM_PROMPT, userContent);
       
       const requestBody = {
-        model: "openai/gpt-3.5-turbo", // Using a more cost-effective model
+        model: "open-r1/olympiccoder-32b",
         messages: messages,
         max_tokens: 2048,
         temperature: 0.7,
