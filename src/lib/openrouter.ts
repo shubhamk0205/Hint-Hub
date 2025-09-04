@@ -4,6 +4,7 @@ import { getMemoryManager, ConversationMemoryManager } from './conversation-memo
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "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";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL || "openai/gpt-3.5-turbo";
 
 // Rate limiting configuration
 let lastRequestTime = 0;
@@ -129,7 +130,7 @@ ${userMessage}
       const messages = await memoryManager.getOpenRouterMessages(SYSTEM_PROMPT, userContent);
       
       const requestBody = {
-        model: "open-r1/olympiccoder-32b",
+        model: OPENROUTER_MODEL,
         messages: messages,
         max_tokens: 2048,
         temperature: 0.7,
@@ -139,6 +140,7 @@ ${userMessage}
       const requestSize = JSON.stringify(requestBody).length;
       console.log("Request URL:", OPENROUTER_API_URL);
       console.log("Request body size:", requestSize, "characters");
+      console.log("Model:", OPENROUTER_MODEL);
       
       // Check if request is too large
       if (requestSize > 30000) {
