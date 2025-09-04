@@ -87,9 +87,9 @@ const Navigation = () => {
                   const provider = new GoogleAuthProvider();
                   await signInWithPopup(auth, provider);
                 }}
-                className="px-4 py-1 rounded bg-primary text-primary-foreground text-xs font-semibold shadow hover:bg-primary/90 transition"
+                className="px-4 py-1 rounded bg-primary text-primary-foreground text-s font-semibold shadow hover:bg-primary/90 transition"
               >
-                Login with Google
+                Login
               </button>
             )}
           </div>
