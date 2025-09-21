@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Bot, 
   User, 
@@ -13,7 +14,8 @@ import {
   Code,
   CheckCircle,
   ArrowRight,
-  Trash2
+  Trash2,
+  Settings
 } from "lucide-react";
 import { getOpenRouterResponse } from "@/lib/openrouter";
 import { generateSessionId, getMemoryManager, clearSessionMemory } from "@/lib/conversation-memory";
@@ -24,6 +26,8 @@ interface Message {
   content: string;
   timestamp: Date;
   messageType?: 'hint' | 'suggestion' | 'walkthrough' | 'general';
+  skillLevel?: 'beginner' | 'intermediate' | 'advanced';
+  isBetterSolution?: boolean;
 }
 
 interface CodeChatbotProps {
@@ -46,6 +50,9 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [memoryInfo, setMemoryInfo] = useState<{ messageCount: number; sessionId: string } | null>(null);
+  const [skillLevel, setSkillLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+  const [showBetterSolutionOffer, setShowBetterSolutionOffer] = useState(false);
+  const [lastBotMessageId, setLastBotMessageId] = useState<string>('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Initialize session ID on component mount
@@ -104,12 +111,14 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
       id: Date.now().toString(),
       type: 'user',
       content: input,
-      timestamp: new Date()
+      timestamp: new Date(),
+      skillLevel
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsTyping(true);
+    setShowBetterSolutionOffer(false);
 
     try {
       // OpenRouter API call with session ID for conversation memory
@@ -118,18 +127,27 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
         code,
         language,
         question,
-        sessionId
+        sessionId,
+        skillLevel
       });
       
+      const botMessageId = (Date.now() + 1).toString();
       const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: botMessageId,
         type: 'bot',
         content: botContent,
         timestamp: new Date(),
-        messageType: 'general' // Could parse for hint/suggestion if needed
+        messageType: 'general',
+        skillLevel
       };
 
       setMessages(prev => [...prev, botMessage]);
+      setLastBotMessageId(botMessageId);
+      
+      // Show better solution offer for beginners only if they've provided a solution
+      if (skillLevel === 'beginner' && isSolutionProvided(input, botContent)) {
+        setShowBetterSolutionOffer(true);
+      }
     } catch (error) {
       console.error("Error getting OpenRouter response:", error);
       const errorMessage: Message = {
@@ -156,6 +174,88 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
     }
   };
 
+  // Function to detect if user has provided a solution
+  const isSolutionProvided = (userInput: string, botResponse: string): boolean => {
+    const userInputLower = userInput.toLowerCase();
+    const botResponseLower = botResponse.toLowerCase();
+    
+    // Check if user is asking for help or clarification (not providing solution)
+    const helpKeywords = [
+      'unable to understand',
+      'unable to think',
+      'not working',
+      'help me',
+      'explain',
+      'what is',
+      'how to',
+      'tell me',
+      'edge cases',
+      'hint',
+      'suggestion',
+      'walkthrough',
+      'stuck',
+      'confused'
+    ];
+    
+    // Check if user is providing a solution
+    const solutionKeywords = [
+      'here is my code',
+      'my solution',
+      'i wrote',
+      'i implemented',
+      'here\'s my approach',
+      'my answer',
+      'i solved it',
+      'this is my code',
+      'i think the solution is',
+      'here\'s what i did',
+      'my implementation',
+      'i coded',
+      'i made',
+      'i created'
+    ];
+    
+    // Check if bot response indicates user provided a solution
+    const botSolutionIndicators = [
+      'good solution',
+      'nice approach',
+      'your code',
+      'your solution',
+      'your implementation',
+      'well done',
+      'correct approach',
+      'that works',
+      'you\'re on the right track',
+      'your logic is correct',
+      'good job',
+      'excellent',
+      'perfect',
+      'right solution'
+    ];
+    
+    // If user input contains solution keywords, it's likely a solution
+    const hasSolutionKeywords = solutionKeywords.some(keyword => 
+      userInputLower.includes(keyword)
+    );
+    
+    // If user input contains help keywords, it's likely not a solution
+    const hasHelpKeywords = helpKeywords.some(keyword => 
+      userInputLower.includes(keyword)
+    );
+    
+    // If bot response indicates user provided a solution
+    const botIndicatesSolution = botSolutionIndicators.some(keyword => 
+      botResponseLower.includes(keyword)
+    );
+    
+    // Show better solution offer if:
+    // 1. User provided solution keywords AND bot indicates it's a solution, OR
+    // 2. Bot response indicates user provided a solution (regardless of user input)
+    // 3. But NOT if user is asking for help
+    return (hasSolutionKeywords && botIndicatesSolution) || 
+           (botIndicatesSolution && !hasHelpKeywords);
+  };
+
   const handleClearConversation = async () => {
     if (sessionId) {
       // Clear the session memory completely
@@ -172,7 +272,53 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
         }
       ]);
       
+      setShowBetterSolutionOffer(false);
+      setLastBotMessageId('');
+      
       console.log("🗑️ Conversation history cleared for session:", sessionId);
+    }
+  };
+
+  const handleBetterSolutionRequest = async () => {
+    if (!lastBotMessageId) return;
+    
+    setIsTyping(true);
+    setShowBetterSolutionOffer(false);
+    
+    try {
+      const betterSolutionContent = await getOpenRouterResponse({
+        userMessage: "Please provide a more advanced solution using better data structures and algorithms for this problem.",
+        code,
+        language,
+        question,
+        sessionId,
+        skillLevel: 'advanced',
+        isBetterSolution: true
+      });
+      
+      const betterSolutionMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'bot',
+        content: betterSolutionContent,
+        timestamp: new Date(),
+        messageType: 'suggestion',
+        skillLevel: 'advanced',
+        isBetterSolution: true
+      };
+
+      setMessages(prev => [...prev, betterSolutionMessage]);
+    } catch (error) {
+      console.error("Error getting better solution:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'bot',
+        content: `Error: ${error instanceof Error ? error.message : 'Failed to get better solution.'}`,
+        timestamp: new Date(),
+        messageType: 'general'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -213,6 +359,19 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
             Code Assistant
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+              <Select value={skillLevel} onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') => setSkillLevel(value)}>
+                <SelectTrigger className="w-32 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {memoryInfo && (
               <span className="text-xs text-muted-foreground">
                 Memory: {memoryInfo.messageCount} messages
@@ -310,6 +469,40 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
                     <div className="text-xs text-muted-foreground">
                       Thinking...
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Better Solution Offer for Beginners */}
+            {showBetterSolutionOffer && skillLevel === 'beginner' && (
+              <div className="flex gap-3">
+                <Avatar className="h-8 w-8 flex-shrink-0">
+                  <AvatarFallback className="bg-muted">
+                    <Lightbulb className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="bg-muted p-3 rounded-lg">
+                  <div className="text-sm mb-2">
+                    💡 Would you like to see a more advanced solution using better data structures and algorithms?
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBetterSolutionRequest}
+                      className="text-xs"
+                    >
+                      Show Advanced Solution
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowBetterSolutionOffer(false)}
+                      className="text-xs"
+                    >
+                      No, thanks
+                    </Button>
                   </div>
                 </div>
               </div>
