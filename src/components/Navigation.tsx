@@ -6,13 +6,15 @@ import {
   BookOpen, 
   Home, 
   Menu, 
-  X
+  X,
+  MessageSquare
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { auth } from "@/lib/firebase";
 import { useEffect } from "react";
 import { signOut, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import LiveUserCount from "./LiveUserCount";
+import FeedbackModal from "./FeedbackModal";
 
 const Navigation = () => {
   const location = useLocation();
@@ -37,7 +39,7 @@ const Navigation = () => {
   return (
     <nav className="bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <img 
@@ -47,8 +49,8 @@ const Navigation = () => {
             />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-1">
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden md:flex space-x-1 flex-1 justify-center">
             {navItems.map(({ to, label, icon: Icon }) => (
               (label === "Home" || user) && (
                 <Link key={to} to={to}>
@@ -65,11 +67,15 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Live User Count */}
-          <LiveUserCount />
+          {/* Right Section - User Count, Feedback, and Profile */}
+          <div className="flex items-center gap-2">
+            {/* Live User Count */}
+            <LiveUserCount />
 
-          {/* Profile Section */}
-          <div className="flex items-center space-x-4">
+            {/* Feedback Button */}
+            <FeedbackModal />
+
+            {/* Profile Section */}
             {user ? (
               <div className="flex items-center gap-2">
                 <Avatar>
@@ -131,6 +137,19 @@ const Navigation = () => {
                   </Link>
                 )
               ))}
+              <div className="px-2 pt-2">
+                <FeedbackModal>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Feedback
+                  </Button>
+                </FeedbackModal>
+              </div>
             </div>
           </div>
         )}
