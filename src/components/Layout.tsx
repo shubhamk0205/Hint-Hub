@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import Navigation from "./Navigation";
-import BuyMeACoffee from "./BuyMeACoffee";
+import SupportWidget from "./SupportWidget";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,7 +13,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main className="flex-1">
         {children}
       </main>
-      <BuyMeACoffee />
+      <SupportWidget />
     </div>
   );
 };
