@@ -1,16 +1,43 @@
 import { supabase, PlaylistProgress, PlaylistProgressSummary } from './supabase'
 import { auth } from './firebase'
 
+// Deduplicate noisy console errors to avoid flooding the console on network failures
+const loggedErrorKeys = new Set<string>()
+const logErrorOnce = (key: string, ...args: unknown[]) => {
+  if (loggedErrorKeys.has(key)) return
+  loggedErrorKeys.add(key)
+  // eslint-disable-next-line no-console
+  console.error(...args)
+}
+
+const isNetworkFetchError = (error: unknown): boolean => {
+  if (!error) return false
+  const message = String((error as any)?.message || error)
+  return message.includes('Failed to fetch') || message.includes('ERR_NAME_NOT_RESOLVED')
+}
+
+// Simple circuit breaker to avoid repeated failing requests when Supabase is unreachable
+let supabaseUnavailable = false
+const markSupabaseUnavailableIfNetworkError = (error: unknown, key: string) => {
+  if (isNetworkFetchError(error)) {
+    supabaseUnavailable = true
+    logErrorOnce(key, 'Supabase appears unreachable. Disabling remote progress for this session.')
+  }
+}
+
 // Save question completion status to Supabase
 export const saveQuestionProgress = async (
   playlistId: string,
   questionId: string,
   completed: boolean
 ): Promise<boolean> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return false
+  }
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return false
     }
 
@@ -28,13 +55,17 @@ export const saveQuestionProgress = async (
       })
 
     if (error) {
-      console.error('Error saving progress:', error)
+      const key = isNetworkFetchError(error) ? 'network-saveQuestionProgress' : 'saveQuestionProgress'
+      logErrorOnce(key, 'Error saving progress:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-saveQuestionProgress')
       return false
     }
 
     return true
   } catch (error) {
-    console.error('Error saving progress:', error)
+    const key = isNetworkFetchError(error) ? 'network-saveQuestionProgress-catch' : 'saveQuestionProgress-catch'
+    logErrorOnce(key, 'Error saving progress:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-saveQuestionProgress-catch')
     return false
   }
 }
@@ -45,10 +76,13 @@ export const saveStudyPlanProgress = async (
   questionId: string,
   completed: boolean
 ): Promise<boolean> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return false
+  }
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return false
     }
 
@@ -66,23 +100,30 @@ export const saveStudyPlanProgress = async (
       })
 
     if (error) {
-      console.error('Error saving study plan progress:', error)
+      const key = isNetworkFetchError(error) ? 'network-saveStudyPlanProgress' : 'saveStudyPlanProgress'
+      logErrorOnce(key, 'Error saving study plan progress:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-saveStudyPlanProgress')
       return false
     }
 
     return true
   } catch (error) {
-    console.error('Error saving study plan progress:', error)
+    const key = isNetworkFetchError(error) ? 'network-saveStudyPlanProgress-catch' : 'saveStudyPlanProgress-catch'
+    logErrorOnce(key, 'Error saving study plan progress:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-saveStudyPlanProgress-catch')
     return false
   }
 }
 
 // Load all progress for a specific playlist
 export const loadPlaylistProgress = async (playlistId: string): Promise<Record<string, boolean>> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return {}
+  }
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return {}
     }
 
@@ -93,7 +134,9 @@ export const loadPlaylistProgress = async (playlistId: string): Promise<Record<s
       .eq('playlist_id', playlistId)
 
     if (error) {
-      console.error('Error loading progress:', error)
+      const key = isNetworkFetchError(error) ? 'network-loadPlaylistProgress' : 'loadPlaylistProgress'
+      logErrorOnce(key, 'Error loading progress:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-loadPlaylistProgress')
       return {}
     }
 
@@ -104,17 +147,22 @@ export const loadPlaylistProgress = async (playlistId: string): Promise<Record<s
 
     return progress
   } catch (error) {
-    console.error('Error loading progress:', error)
+    const key = isNetworkFetchError(error) ? 'network-loadPlaylistProgress-catch' : 'loadPlaylistProgress-catch'
+    logErrorOnce(key, 'Error loading progress:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-loadPlaylistProgress-catch')
     return {}
   }
 }
 
 // Load all progress for a specific study plan
 export const loadStudyPlanProgress = async (planId: string): Promise<Record<string, boolean>> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return {}
+  }
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return {}
     }
 
@@ -125,7 +173,9 @@ export const loadStudyPlanProgress = async (planId: string): Promise<Record<stri
       .eq('playlist_id', `study-plan-${planId}`)
 
     if (error) {
-      console.error('Error loading study plan progress:', error)
+      const key = isNetworkFetchError(error) ? 'network-loadStudyPlanProgress' : 'loadStudyPlanProgress'
+      logErrorOnce(key, 'Error loading study plan progress:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-loadStudyPlanProgress')
       return {}
     }
 
@@ -136,17 +186,22 @@ export const loadStudyPlanProgress = async (planId: string): Promise<Record<stri
 
     return progress
   } catch (error) {
-    console.error('Error loading study plan progress:', error)
+    const key = isNetworkFetchError(error) ? 'network-loadStudyPlanProgress-catch' : 'loadStudyPlanProgress-catch'
+    logErrorOnce(key, 'Error loading study plan progress:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-loadStudyPlanProgress-catch')
     return {}
   }
 }
 
 // Get progress summary for a playlist
 export const getPlaylistProgressSummary = async (playlistId: string): Promise<PlaylistProgressSummary | null> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return null
+  }
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return null
     }
 
@@ -157,7 +212,9 @@ export const getPlaylistProgressSummary = async (playlistId: string): Promise<Pl
       .eq('playlist_id', playlistId)
 
     if (error) {
-      console.error('Error loading progress summary:', error)
+      const key = isNetworkFetchError(error) ? 'network-getPlaylistProgressSummary' : 'getPlaylistProgressSummary'
+      logErrorOnce(key, 'Error loading progress summary:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-getPlaylistProgressSummary')
       return null
     }
 
@@ -171,17 +228,22 @@ export const getPlaylistProgressSummary = async (playlistId: string): Promise<Pl
       progress_percentage: totalQuestions > 0 ? (completedQuestions / totalQuestions) * 100 : 0
     }
   } catch (error) {
-    console.error('Error loading progress summary:', error)
+    const key = isNetworkFetchError(error) ? 'network-getPlaylistProgressSummary-catch' : 'getPlaylistProgressSummary-catch'
+    logErrorOnce(key, 'Error loading progress summary:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-getPlaylistProgressSummary-catch')
     return null
   }
 }
 
 // Get progress summary for a study plan
 export const getStudyPlanProgressSummary = async (planId: string): Promise<PlaylistProgressSummary | null> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return null
+  }
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return null
     }
 
@@ -192,7 +254,9 @@ export const getStudyPlanProgressSummary = async (planId: string): Promise<Playl
       .eq('playlist_id', `study-plan-${planId}`)
 
     if (error) {
-      console.error('Error loading study plan progress summary:', error)
+      const key = isNetworkFetchError(error) ? 'network-getStudyPlanProgressSummary' : 'getStudyPlanProgressSummary'
+      logErrorOnce(key, 'Error loading study plan progress summary:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-getStudyPlanProgressSummary')
       return null
     }
 
@@ -206,7 +270,9 @@ export const getStudyPlanProgressSummary = async (planId: string): Promise<Playl
       progress_percentage: totalQuestions > 0 ? (completedQuestions / totalQuestions) * 100 : 0
     }
   } catch (error) {
-    console.error('Error loading study plan progress summary:', error)
+    const key = isNetworkFetchError(error) ? 'network-getStudyPlanProgressSummary-catch' : 'getStudyPlanProgressSummary-catch'
+    logErrorOnce(key, 'Error loading study plan progress summary:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-getStudyPlanProgressSummary-catch')
     return null
   }
 }
@@ -216,10 +282,11 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
   try {
     const user = auth.currentUser
     if (!user) {
-      console.error('No authenticated user found')
+      logErrorOnce('auth-missing', 'No authenticated user found')
       return false
     }
 
+    // eslint-disable-next-line no-console
     console.log('Starting migration for user:', user.uid)
 
     // Get all localStorage keys that start with 'playlist-' or 'study-plan-'
@@ -227,9 +294,11 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
     const studyPlanKeys = Object.keys(localStorage).filter(key => key.startsWith('study-plan-'))
     const allKeys = [...playlistKeys, ...studyPlanKeys]
     
+    // eslint-disable-next-line no-console
     console.log('Found keys to migrate:', allKeys)
     
     if (allKeys.length === 0) {
+      // eslint-disable-next-line no-console
       console.log('No data found in localStorage')
       return true
     }
@@ -238,6 +307,7 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
       try {
         const progressData = localStorage.getItem(key)
         
+        // eslint-disable-next-line no-console
         console.log(`Processing ${key}:`, progressData)
         
         if (!progressData) return
@@ -245,6 +315,7 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
         const progress = JSON.parse(progressData)
         const questionIds = Object.keys(progress)
 
+        // eslint-disable-next-line no-console
         console.log(`${key} has ${questionIds.length} questions`)
 
         // Insert all progress data
@@ -258,6 +329,7 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
           updated_at: new Date().toISOString()
         }))
 
+        // eslint-disable-next-line no-console
         console.log(`Inserting ${progressRecords.length} records for ${key}`)
 
         const { error } = await supabase
@@ -267,7 +339,8 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
           })
 
         if (error) {
-          console.error(`Error migrating ${key}:`, error)
+          logErrorOnce(`migrate-${key}`, `Error migrating ${key}:`, error)
+          // eslint-disable-next-line no-console
           console.error('Error details:', {
             message: error.message,
             details: error.details,
@@ -277,10 +350,11 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
           return false
         }
 
+        // eslint-disable-next-line no-console
         console.log(`Successfully migrated ${key}`)
         return true
       } catch (error) {
-        console.error(`Error migrating data for ${key}:`, error)
+        logErrorOnce(`migrate-catch-${key}`, `Error migrating data for ${key}:`, error)
         return false
       }
     })
@@ -288,6 +362,7 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
     const results = await Promise.all(migrationPromises)
     const successCount = results.filter(Boolean).length
     
+    // eslint-disable-next-line no-console
     console.log(`Migration completed: ${successCount}/${allKeys.length} items migrated successfully`)
     
     // Optionally, you can remove the localStorage data after successful migration
@@ -295,13 +370,16 @@ export const migrateLocalStorageToSupabase = async (): Promise<boolean> => {
     
     return successCount === allKeys.length
   } catch (error) {
-    console.error('Error during migration:', error)
+    logErrorOnce('migration', 'Error during migration:', error)
     return false
   }
 }
 
 // Check if user has any progress data in Supabase
 export const hasSupabaseProgress = async (): Promise<boolean> => {
+  if (supabaseUnavailable || !navigator.onLine) {
+    return false
+  }
   try {
     const user = auth.currentUser
     if (!user) return false
@@ -313,13 +391,17 @@ export const hasSupabaseProgress = async (): Promise<boolean> => {
       .limit(1)
 
     if (error) {
-      console.error('Error checking Supabase progress:', error)
+      const key = isNetworkFetchError(error) ? 'network-hasSupabaseProgress' : 'hasSupabaseProgress'
+      logErrorOnce(key, 'Error checking Supabase progress:', error)
+      markSupabaseUnavailableIfNetworkError(error, 'cb-hasSupabaseProgress')
       return false
     }
 
     return (data?.length || 0) > 0
   } catch (error) {
-    console.error('Error checking Supabase progress:', error)
+    const key = isNetworkFetchError(error) ? 'network-hasSupabaseProgress-catch' : 'hasSupabaseProgress-catch'
+    logErrorOnce(key, 'Error checking Supabase progress:', error)
+    markSupabaseUnavailableIfNetworkError(error, 'cb-hasSupabaseProgress-catch')
     return false
   }
 }

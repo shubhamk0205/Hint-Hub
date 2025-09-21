@@ -162,7 +162,16 @@ const StudyPlans = () => {
         
         setPlaylists(updatedPlaylists);
       } catch (error) {
-        console.error('Error loading playlist progress:', error);
+        // Reduce noisy logs when network is down; surface a single warning
+        const message = String((error as any)?.message || error)
+        const isNetwork = message.includes('Failed to fetch') || message.includes('ERR_NAME_NOT_RESOLVED')
+        if (isNetwork) {
+          // eslint-disable-next-line no-console
+          console.warn('Network error while loading playlist progress. Showing local data.')
+        } else {
+          // eslint-disable-next-line no-console
+          console.error('Error loading playlist progress:', error)
+        }
         // Fallback to original playlists if there's an error
         setPlaylists(interviewPlaylists);
       }
@@ -206,7 +215,15 @@ const StudyPlans = () => {
         
         setStudyPlansWithProgress(updatedStudyPlans);
       } catch (error) {
-        console.error('Error loading study plan progress:', error);
+        const message = String((error as any)?.message || error)
+        const isNetwork = message.includes('Failed to fetch') || message.includes('ERR_NAME_NOT_RESOLVED')
+        if (isNetwork) {
+          // eslint-disable-next-line no-console
+          console.warn('Network error while loading study plan progress. Showing local data.')
+        } else {
+          // eslint-disable-next-line no-console
+          console.error('Error loading study plan progress:', error)
+        }
         setStudyPlansWithProgress(studyPlans); // Fallback
       }
     };
