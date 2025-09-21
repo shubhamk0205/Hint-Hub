@@ -49,8 +49,8 @@ const Navigation = () => {
             />
           </Link>
 
-          {/* Desktop Navigation - Centered */}
-          <div className="hidden md:flex space-x-1 flex-1 justify-center">
+          {/* Desktop Navigation - Centered with right offset */}
+          <div className="hidden md:flex space-x-1 flex-1 justify-center ml-24">
             {navItems.map(({ to, label, icon: Icon }) => (
               (label === "Home" || user) && (
                 <Link key={to} to={to}>
