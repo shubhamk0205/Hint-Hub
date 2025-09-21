@@ -52,7 +52,7 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
   useEffect(() => {
     const newSessionId = generateSessionId();
     setSessionId(newSessionId);
-    console.log("🆔 New conversation session started:", newSessionId);
+    console.log("🆔 New conversation session started");
   }, []);
 
   // Function to update memory info
