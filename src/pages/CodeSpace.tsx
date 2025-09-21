@@ -70,6 +70,18 @@ const CodeSpace = () => {
     setCode("");
   };
 
+  const handleNewConversation = () => {
+    // Clear code and question when starting new conversation
+    setCode("");
+    setQuestion("");
+    
+    // Show toast notification
+    toast({
+      title: "New Conversation Started",
+      description: "Ready to help with a new question!",
+    });
+  };
+
   const handlePasteQuestion = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -154,7 +166,12 @@ const CodeSpace = () => {
 
           {/* AI Chatbot Section */}
           <div>
-            <CodeChatbot code={code} language={language} question={question} />
+            <CodeChatbot 
+              code={code} 
+              language={language} 
+              question={question} 
+              onNewConversation={handleNewConversation}
+            />
           </div>
         </div>
       </div>

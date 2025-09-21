@@ -15,7 +15,8 @@ import {
   CheckCircle,
   ArrowRight,
   Trash2,
-  Settings
+  Settings,
+  MessageSquarePlus
 } from "lucide-react";
 import { getOpenRouterResponse } from "@/lib/openrouter";
 import { generateSessionId, getMemoryManager, clearSessionMemory } from "@/lib/conversation-memory";
@@ -34,9 +35,10 @@ interface CodeChatbotProps {
   code: string;
   language: string;
   question: string;
+  onNewConversation?: () => void;
 }
 
-const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
+const CodeChatbot = ({ code, language, question, onNewConversation }: CodeChatbotProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -279,6 +281,38 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
     }
   };
 
+  const handleNewConversation = async () => {
+    // Clear current session memory
+    if (sessionId) {
+      clearSessionMemory(sessionId);
+    }
+    
+    // Generate new session ID
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId);
+    
+    // Reset messages to initial state
+    setMessages([
+      {
+        id: Date.now().toString(),
+        type: 'bot',
+        content: "Hi! I'm your DSA and backend coding assistant. I specialize in Data Structures & Algorithms, Express.js, and MySQL. Feel free to ask me about algorithms, optimization, database queries, or Express routes!",
+        timestamp: new Date(),
+        messageType: 'general'
+      }
+    ]);
+    
+    setShowBetterSolutionOffer(false);
+    setLastBotMessageId('');
+    
+    // Call the parent callback if provided
+    if (onNewConversation) {
+      onNewConversation();
+    }
+    
+    console.log("🆕 New conversation started with session:", newSessionId);
+  };
+
   const handleBetterSolutionRequest = async () => {
     if (!lastBotMessageId) return;
     
@@ -377,6 +411,15 @@ const CodeChatbot = ({ code, language, question }: CodeChatbotProps) => {
                 Memory: {memoryInfo.messageCount} messages
               </span>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNewConversation}
+              className="text-xs"
+              title="Get help with another question"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="sm"
