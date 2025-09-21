@@ -109,12 +109,12 @@ const HomePage = () => {
             to foster problem-solving and deeper understanding of Data Structures & Algorithms.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="flex items-center gap-2" onClick={() => handleProtectedNavigation("/code-space")}> 
+            <Button size="lg" className="flex items-center gap-2" onClick={() => handleProtectedNavigation("/study-plans")}> 
               Start Learning
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" onClick={() => handleProtectedNavigation("/study-plans")}> 
-              Explore Study Plans
+            <Button variant="outline" size="lg" onClick={() => handleProtectedNavigation("/code-space")}> 
+              Get Help with a Question
             </Button>
           </div>
         </div>
