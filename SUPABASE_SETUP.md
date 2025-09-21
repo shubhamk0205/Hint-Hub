@@ -5,8 +5,8 @@ This guide will help you set up Supabase to store playlist progress data instead
 ## Prerequisites
 
 - A Supabase project (already configured)
-- Project URL: `https://tqweelvaaecnvcfqdtok.supabase.co`
-- API Key (anon): `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxd2VlbHZhYWVjbnZjZnFkdG9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzMjA4MjksImV4cCI6MjA3MTg5NjgyOX0.BEfzN3WaIfpmIuIPq-DbMWuxC7iW4-VIcMcM9CTPQ-8`
+- Project URL: `https://urooxqvwvsxxainfmorg.supabase.co`
+- API Key (anon): `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyb294cXZ3dnN4eGFpbmZtb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTI3NjksImV4cCI6MjA3Mzk4ODc2OX0.8o_gxdKu3jIeJRXDP7B0Gf1ZlC0qxNlEqdt_Z4-UtJM`
 
 ## Step 1: Set Up Database Table
 
