@@ -1,83 +1,45 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { auth } from '@/lib/firebase';
-import { Users } from 'lucide-react';
-
-interface ActiveUser {
-  id: string;
-  user_id: string;
-  last_seen: string;
-  page: string;
-}
+import { UserCheck } from 'lucide-react';
 
 const LiveUserCount = () => {
-  const [userCount, setUserCount] = useState(0);
+  const [totalUserCount, setTotalUserCount] = useState(0);
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-    let subscription: any;
 
     const updateUserActivity = async () => {
       if (!auth.currentUser) return;
 
       try {
-        // Update or insert user activity
-        const { error } = await supabase
-          .from('active_users')
-          .upsert({
-            user_id: auth.currentUser.uid,
-            last_seen: new Date().toISOString(),
-            page: window.location.pathname
-          }, {
-            onConflict: 'user_id'
-          });
+        // Track user visit in total_users table
+        const { error: trackError } = await supabase.rpc('track_user_visit', {
+          user_uid: auth.currentUser.uid
+        });
 
-        if (error) {
-          console.error('Error updating user activity:', error);
+        if (trackError) {
+          console.error('Error tracking user visit:', trackError);
         }
       } catch (error) {
         console.error('Error in updateUserActivity:', error);
       }
     };
 
-    const fetchActiveUsers = async () => {
+    const fetchTotalUsers = async () => {
       try {
-        // Get users active in the last 5 minutes
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        
-        const { data, error } = await supabase
-          .from('active_users')
-          .select('*')
-          .gte('last_seen', fiveMinutesAgo);
+        const { data, error } = await supabase.rpc('get_total_user_count');
 
         if (error) {
-          console.error('Error fetching active users:', error);
+          console.error('Error fetching total users:', error);
           return;
         }
 
-        setUserCount(data?.length || 0);
+        setTotalUserCount(data || 0);
       } catch (error) {
-        console.error('Error in fetchActiveUsers:', error);
+        console.error('Error in fetchTotalUsers:', error);
       }
-    };
-
-    const setupRealtimeSubscription = () => {
-      // Subscribe to changes in active_users table
-      subscription = supabase
-        .channel('active_users_changes')
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'active_users' 
-          }, 
-          () => {
-            // Refetch active users when there are changes
-            fetchActiveUsers();
-          }
-        )
-        .subscribe();
     };
 
     const startUserTracking = () => {
@@ -87,24 +49,18 @@ const LiveUserCount = () => {
       
       // Initial update
       updateUserActivity();
-      fetchActiveUsers();
-      
-      // Set up real-time subscription
-      setupRealtimeSubscription();
+      fetchTotalUsers();
       
       // Update user activity every 30 seconds
       intervalId = setInterval(updateUserActivity, 30000);
       
-      // Fetch active users every 10 seconds
-      const fetchInterval = setInterval(fetchActiveUsers, 10000);
+      // Fetch total users every 60 seconds (less frequent since it changes less often)
+      const totalUsersInterval = setInterval(fetchTotalUsers, 60000);
       
       // Cleanup function
       return () => {
         clearInterval(intervalId);
-        clearInterval(fetchInterval);
-        if (subscription) {
-          subscription.unsubscribe();
-        }
+        clearInterval(totalUsersInterval);
       };
     };
 
@@ -116,7 +72,6 @@ const LiveUserCount = () => {
         startUserTracking();
       } else if (!user && isOnline) {
         setIsOnline(false);
-        setUserCount(0);
         if (cleanup) cleanup();
       }
     });
@@ -135,14 +90,16 @@ const LiveUserCount = () => {
 
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Users className="h-4 w-4" />
-      <span className="hidden sm:inline">
-        {userCount} {userCount === 1 ? 'user' : 'users'} active
-      </span>
-      <span className="sm:hidden">
-        {userCount}
-      </span>
-      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+      {/* Total Users Only */}
+      <div className="flex items-center gap-1">
+        <UserCheck className="h-4 w-4" />
+        <span className="hidden sm:inline">
+          {totalUserCount.toLocaleString()} total users
+        </span>
+        <span className="sm:hidden">
+          {totalUserCount.toLocaleString()}
+        </span>
+      </div>
     </div>
   );
 };
