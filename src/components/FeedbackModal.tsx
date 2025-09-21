@@ -54,7 +54,7 @@ const FeedbackModal = ({ children }: FeedbackModalProps) => {
     setIsSubmitting(true);
 
     try {
-      // Create a mailto link with pre-filled content
+      // Create Gmail compose URL with pre-filled content
       const subject = `[Hint Hub Feedback] ${formData.type.charAt(0).toUpperCase() + formData.type.slice(1)}`;
       const body = `Hello Shubham,
 
@@ -72,14 +72,15 @@ ${formData.message}
 ---
 This feedback was sent through the Hint Hub feedback form.`;
 
-      const mailtoLink = `mailto:work.shubhamkapoor2005@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      // Gmail compose URL
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=work.shubhamkapoor2005@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
-      // Open mailto link
-      window.open(mailtoLink, '_blank');
+      // Open Gmail in new tab
+      window.open(gmailUrl, '_blank');
       
       toast({
-        title: "Opening Email Client",
-        description: "Your email client will open with pre-filled feedback. Please send the email to complete your feedback submission.",
+        title: "Opening Gmail",
+        description: "Gmail will open in a new tab with pre-filled feedback. Please send the email to complete your feedback submission.",
       });
       
       // Reset form
@@ -91,10 +92,10 @@ This feedback was sent through the Hint Hub feedback form.`;
       });
       setIsOpen(false);
     } catch (error) {
-      console.error('Error opening email client:', error);
+      console.error('Error opening Gmail:', error);
       toast({
         title: "Error",
-        description: "Could not open email client. Please email work.shubhamkapoor2005@gmail.com directly.",
+        description: "Could not open Gmail. Please email work.shubhamkapoor2005@gmail.com directly.",
         variant: "destructive"
       });
     } finally {
