@@ -12,6 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { auth } from "@/lib/firebase";
 import { useEffect } from "react";
 import { signOut, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import LiveUserCount from "./LiveUserCount";
 
 const Navigation = () => {
   const location = useLocation();
@@ -63,6 +64,9 @@ const Navigation = () => {
               )
             ))}
           </div>
+
+          {/* Live User Count */}
+          <LiveUserCount />
 
           {/* Profile Section */}
           <div className="flex items-center space-x-4">
