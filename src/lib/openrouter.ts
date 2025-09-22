@@ -96,7 +96,6 @@ const rateLimit = async () => {
   
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
     const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
-    console.log(`Rate limiting: waiting ${waitTime}ms before next request`);
     await delay(waitTime);
   }
   
@@ -126,10 +125,7 @@ export async function getOpenRouterResponse({
     return "Error: OpenRouter API key not configured.";
   }
 
-  console.log("🔍 Starting OpenRouter API request...");
-  console.log("API Key present:", !!OPENROUTER_API_KEY);
-  console.log("API Key length:", OPENROUTER_API_KEY?.length || 0);
-  console.log("Running in browser:", typeof window !== 'undefined');
+  // Starting API request (minimal logging)
 
   // Get memory manager for this session
   const memoryManager = getMemoryManager(sessionId);
@@ -184,7 +180,7 @@ ${userMessage}
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`📡 Attempt ${attempt}/${maxRetries} - Making API request...`);
+      // Making API request (attempt ${attempt}/${maxRetries})
       
       // Get conversation history and construct messages
       const systemPrompt = getSystemPrompt(skillLevel, isBetterSolution);
@@ -199,13 +195,10 @@ ${userMessage}
       };
 
       const requestSize = JSON.stringify(requestBody).length;
-      console.log("Request URL:", OPENROUTER_API_URL);
-      console.log("Request body size:", requestSize, "characters");
-      console.log("Model:", OPENROUTER_MODEL);
       
       // Check if request is too large
       if (requestSize > 30000) {
-        console.warn("⚠️ Request is quite large. Consider shortening your code or message.");
+        console.warn("Request is quite large. Consider shortening your code or message.");
       }
 
       // Check if we're in a browser environment and add CORS headers if needed
@@ -223,14 +216,10 @@ ${userMessage}
       // Add mode: 'cors' for browser environments
       if (typeof window !== 'undefined') {
         fetchOptions.mode = 'cors';
-        console.log("Using CORS mode for browser request");
       }
 
       const response = await fetch(OPENROUTER_API_URL, fetchOptions);
 
-      console.log(`Response status: ${response.status} ${response.statusText}`);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
       // Log response body for debugging 402 errors
       if (response.status === 402) {
         const errorBody = await response.text();
@@ -242,7 +231,7 @@ ${userMessage}
         const retryAfter = response.headers.get('Retry-After');
         const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, attempt) * 1000;
         
-        console.warn(`Rate limited (attempt ${attempt}/${maxRetries}). Waiting ${waitTime}ms before retry...`);
+        console.warn(`Rate limited. Waiting ${waitTime}ms before retry...`);
         await delay(waitTime);
         continue;
       }
@@ -269,7 +258,6 @@ ${userMessage}
       }
 
       const data = await response.json();
-      console.log("Response data keys:", Object.keys(data));
       
       // Check for API errors in the response
       if (data.error) {
@@ -278,7 +266,7 @@ ${userMessage}
         if (data.error.code === 429) {
           // Rate limited in response body
           const waitTime = Math.pow(2, attempt) * 1000;
-          console.warn(`Rate limited in response (attempt ${attempt}/${maxRetries}). Waiting ${waitTime}ms before retry...`);
+          console.warn(`Rate limited in response. Waiting ${waitTime}ms before retry...`);
           await delay(waitTime);
           continue;
         }
@@ -290,33 +278,22 @@ ${userMessage}
       const responseText = data?.choices?.[0]?.message?.content;
       
       if (!responseText) {
-        console.error("Unexpected response format:", data);
-        console.error("Choices:", data?.choices);
-        console.error("First choice:", data?.choices?.[0]);
-        console.error("Message:", data?.choices?.[0]?.message);
+        console.error("Invalid response format from OpenRouter API");
         throw new Error("Invalid response format from OpenRouter API");
       }
-
-      console.log("✅ Successfully received response from OpenRouter API");
       
       // Save assistant response to memory
       await memoryManager.addMessage('assistant', responseText);
       
       // Check if we need to truncate history to prevent oversized requests
       if (await memoryManager.shouldTruncate()) {
-        console.log("📝 Truncating conversation history to prevent oversized requests");
         await memoryManager.truncateHistory();
       }
       
       return responseText;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      console.error(`OpenRouter API Error (attempt ${attempt}/${maxRetries}):`, lastError);
-      console.error("Error details:", {
-        name: lastError.name,
-        message: lastError.message,
-        stack: lastError.stack
-      });
+      console.error(`API Error (attempt ${attempt}/${maxRetries}):`, lastError.message);
       
       // Check for CORS errors
       if (lastError.message.includes('CORS') || lastError.message.includes('cors')) {
@@ -335,13 +312,12 @@ ${userMessage}
       
       // Wait before retrying (exponential backoff)
       const waitTime = Math.pow(2, attempt) * 1000;
-      console.log(`Retrying in ${waitTime}ms...`);
       await delay(waitTime);
     }
   }
 
   // If we get here, all retries failed
   const errorMessage = lastError?.message || "Unknown error occurred";
-  console.error("All retries failed. Final error:", errorMessage);
+  console.error("All retries failed:", errorMessage);
   return `Sorry, there was an error connecting to the AI assistant after multiple attempts: ${errorMessage}. Please check your API key and try again.`;
 }

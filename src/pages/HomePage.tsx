@@ -63,14 +63,7 @@ const HomePage = () => {
     if (!auth.currentUser) {
       try {
         const provider = new GoogleAuthProvider();
-        console.log("Attempting Google sign-in...");
-        console.log("Firebase config:", {
-          apiKey: import.meta.env.VITE_FIREBASE_API_KEY ? "Set" : "Not set",
-          authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? "Set" : "Not set",
-          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ? "Set" : "Not set"
-        });
         await signInWithPopup(auth, provider);
-        console.log("Sign-in successful!");
         navigate(path);
       } catch (error) {
         console.error("Sign-in error:", error);

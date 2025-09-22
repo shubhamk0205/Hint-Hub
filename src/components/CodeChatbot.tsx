@@ -61,7 +61,6 @@ const CodeChatbot = ({ code, language, question, onNewConversation }: CodeChatbo
   useEffect(() => {
     const newSessionId = generateSessionId();
     setSessionId(newSessionId);
-    console.log("🆔 New conversation session started");
   }, []);
 
   // Function to update memory info
@@ -277,7 +276,7 @@ const CodeChatbot = ({ code, language, question, onNewConversation }: CodeChatbo
       setShowBetterSolutionOffer(false);
       setLastBotMessageId('');
       
-      console.log("🗑️ Conversation history cleared for session:", sessionId);
+      // Conversation history cleared
     }
   };
 
@@ -310,7 +309,7 @@ const CodeChatbot = ({ code, language, question, onNewConversation }: CodeChatbo
       onNewConversation();
     }
     
-    console.log("🆕 New conversation started with session:", newSessionId);
+    // New conversation started
   };
 
   const handleBetterSolutionRequest = async () => {
