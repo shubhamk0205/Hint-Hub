@@ -20,6 +20,7 @@ import {
   Copy, 
   Trash2
 } from "lucide-react";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const CodeSpace = () => {
   const [code, setCode] = useState("");
@@ -219,10 +220,11 @@ const CodeSpace = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ResizablePanelGroup direction="horizontal" className="w-full h-[70vh] gap-6">
           {/* Code Input Section */}
-          <div>
-            <Card>
+          <ResizablePanel defaultSize={60} minSize={30}>
+            <div className="h-full overflow-auto">
+              <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
@@ -287,18 +289,23 @@ const CodeSpace = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
 
           {/* AI Chatbot Section */}
-          <div>
-            <CodeChatbot 
-              code={code} 
-              language={language} 
-              question={question} 
-              onNewConversation={handleNewConversation}
-            />
-          </div>
-        </div>
+          <ResizablePanel defaultSize={40} minSize={30}>
+            <div className="h-full overflow-auto">
+              <CodeChatbot 
+                code={code} 
+                language={language} 
+                question={question} 
+                onNewConversation={handleNewConversation}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
