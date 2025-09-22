@@ -254,7 +254,7 @@ const CodeSpace = () => {
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder="Paste your question here..."
                     rows={5}
-                    className="min-h-32 md:min-h-40 flex-1"
+                    className="min-h-32 md:min-h-40 flex-1 border border-orange-500/60 focus-visible:ring-1 focus-visible:ring-orange-500/50"
                   />
                   <Button type="button" variant="outline" onClick={handlePasteQuestion}>
                     Paste
