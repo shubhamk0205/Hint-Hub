@@ -58,21 +58,70 @@ import { normalizeWhitespace } from '@/lib/utils';
     return () => unsubscribe();
   }, [navigate]);
 
+  // Restore persisted Code Space state on mount
+  useEffect(() => {
+    try {
+      const savedCode = localStorage.getItem('codeSpace.code');
+      const savedLang = localStorage.getItem('codeSpace.language');
+      const savedQuestion = sessionStorage.getItem('codeSpace.question');
+      const savedShowResult = localStorage.getItem('codeSpace.showResult');
+      const savedResult = localStorage.getItem('codeSpace.result');
+
+      if (savedCode !== null) setCode(savedCode);
+      if (savedLang) setLanguage(savedLang);
+      if (savedQuestion) setQuestion(savedQuestion);
+      if (savedShowResult) setShowResult(savedShowResult === '1');
+      if (savedResult) {
+        try { setResult(JSON.parse(savedResult)); } catch {}
+      }
+    } catch {}
+  }, []);
+
+  // Persist Code Space state on change
+  useEffect(() => {
+    try {
+      localStorage.setItem('codeSpace.code', code);
+      localStorage.setItem('codeSpace.language', language);
+      sessionStorage.setItem('codeSpace.question', question);
+      localStorage.setItem('codeSpace.showResult', showResult ? '1' : '0');
+      if (result) {
+        localStorage.setItem('codeSpace.result', JSON.stringify(result));
+      } else {
+        localStorage.removeItem('codeSpace.result');
+      }
+    } catch {}
+  }, [code, language, question, showResult, result]);
+
+  // Clear only the question on full refresh (not SPA tab changes)
+  useEffect(() => {
+    const handler = () => {
+      try { sessionStorage.removeItem('codeSpace.question'); } catch {}
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
+
   // Check for pre-filled question from interview questions
   useEffect(() => {
     const html = localStorage.getItem('prefilledQuestionHTML') || '';
     const metaRaw = localStorage.getItem('prefilledQuestionMeta');
     setFullProblemHTML(html);
     setProblemMeta(metaRaw ? JSON.parse(metaRaw) : null);
+    // Clear stored problem so refresh does not show it again
+    localStorage.removeItem('prefilledQuestionHTML');
+    localStorage.removeItem('prefilledQuestionMeta');
+    localStorage.removeItem('prefilledQuestionText');
     const prefilledQuestion = localStorage.getItem('prefilledQuestion');
     const questionSource = localStorage.getItem('questionSource');
     
     if (prefilledQuestion) {
-      setQuestion(normalizeWhitespace(prefilledQuestion));
+      const normalized = normalizeWhitespace(prefilledQuestion);
+      setQuestion(normalized);
       // Clear the localStorage after using it
       localStorage.removeItem('prefilledQuestion');
       localStorage.removeItem('questionSource');
-      // Keep HTML/meta so the panel can render even after text is consumed
+      // Persist question so navigating away/back keeps it
+      try { sessionStorage.setItem('codeSpace.question', normalized); } catch {}
       
       // Show a toast notification
       if (questionSource) {
@@ -225,6 +274,13 @@ import { normalizeWhitespace } from '@/lib/utils';
       title: "New Conversation Started",
       description: "Ready to help with a new question!",
     });
+    // Clear persisted state so a fresh conversation starts clean
+    try {
+      localStorage.removeItem('codeSpace.code');
+      sessionStorage.removeItem('codeSpace.question');
+      localStorage.removeItem('codeSpace.result');
+      localStorage.setItem('codeSpace.showResult', '0');
+    } catch {}
   };
 
   const handlePasteQuestion = async () => {
