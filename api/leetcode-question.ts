@@ -30,6 +30,9 @@ export default async function handler(req: Request) {
           'content-type': 'application/json',
           // Adding referer improves reliability for some LeetCode regions
           'referer': 'https://leetcode.com/',
+          // Some upstreams behave differently on missing UA/origin in production
+          'user-agent': 'Mozilla/5.0 (compatible; HintHub/1.0; +https://vercel.com)',
+          'origin': 'https://leetcode.com',
         },
         body: JSON.stringify({ query, variables: { titleSlug: slug } }),
       });
