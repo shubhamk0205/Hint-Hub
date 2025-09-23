@@ -27,7 +27,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fetchLeetCodeQuestion, deriveSlugFromUrl, stripHtml } from '@/lib/leetcode';
+import { fetchLeetCodeQuestion, deriveSlugFromUrl, stripHtml, mapTitleToSlug } from '@/lib/leetcode';
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { loadPlaylistProgress, saveQuestionProgress, loadStudyPlanProgress, saveStudyPlanProgress } from "@/lib/playlistProgress";
@@ -798,7 +798,7 @@ const StudyPlans = () => {
 
   const handleGetHelp = async (question: Question) => {
     try {
-      const slug = deriveSlugFromUrl(question.leetcodeUrl);
+      let slug = deriveSlugFromUrl(question.leetcodeUrl) || mapTitleToSlug(question.title);
 
       let html = '';
       let meta: any = {

@@ -67,7 +67,7 @@ String | Longest Palindromic Substring | Medium | https://leetcode.com/problems/
 String | Roman Number to Integer | Easy | https://leetcode.com/problems/roman-to-integer/
 String | Implement ATOI/STRSTR | Medium | https://leetcode.com/problems/string-to-integer-atoi/
 String | Longest Common Prefix | Easy | https://leetcode.com/problems/longest-common-prefix/
-String | KMP Algorithm | Hard | https://leetcode.com/problems/implement-strstr/
+String | Find the Index of the First Occurrence in a String | Hard | https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/
 String | Check for Anagrams | Easy | https://leetcode.com/problems/valid-anagram/
 String | Count and Say | Medium | https://leetcode.com/problems/count-and-say/
 String | Compare Version Numbers | Medium | https://leetcode.com/problems/compare-version-numbers/
