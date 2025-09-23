@@ -2,7 +2,19 @@ export const config = { runtime: 'edge' };
 
 export default async function handler(req: Request) {
   try {
-    const { slug } = await req.json();
+    if (req.method && req.method.toUpperCase() !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+        status: 405,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    let slug: unknown = undefined;
+    try {
+      const body = await req.json();
+      slug = (body as any)?.slug;
+    } catch {
+      // No/invalid JSON – fall through to validation below
+    }
     if (!slug || typeof slug !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing slug' }), {
         status: 400,

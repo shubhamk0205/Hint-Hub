@@ -1,0 +1,13 @@
+{
+  "framework": "vite",
+  "devCommand": "npm run dev",
+  "buildCommand": "npm run build",
+  "ignoreCommand": "echo ok",
+  "functions": {
+    "api/**": {
+      "runtime": "edge"
+    }
+  }
+}
+
+

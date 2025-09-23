@@ -1,5 +1,7 @@
 export async function fetchLeetCodeQuestion(slug: string) {
-  const r = await fetch('/api/leetcode-question', {
+  const base: string = (import.meta as any).env?.VITE_API_BASE || '';
+  const url = base ? `${base.replace(/\/$/, '')}/api/leetcode-question` : '/api/leetcode-question';
+  const r = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ slug }),

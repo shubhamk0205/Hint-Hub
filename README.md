@@ -1,3 +1,11 @@
+Local dev for LeetCode proxy
+
+1) Install Vercel CLI: `npm i -g vercel`
+2) In one terminal: `vercel dev` (serves http://localhost:3000/api/*)
+3) In another terminal: `npm run dev` (serves http://localhost:8080)
+4) Optional: set VITE_API_BASE to override API base (e.g. your deployed domain)
+   - Windows PowerShell: `$env:VITE_API_BASE="https://YOUR_APP.vercel.app"; npm run dev`
+
 # Hint Hub - AI-Powered DSA Learning Platform
 
 <div align="center">
