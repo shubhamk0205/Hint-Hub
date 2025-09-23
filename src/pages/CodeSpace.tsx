@@ -27,6 +27,8 @@ import {
   PartyPopper
 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import DOMPurify from 'dompurify';
+import { normalizeWhitespace } from '@/lib/utils';
 
  const CodeSpace = () => {
    const [code, setCode] = useState("");
@@ -44,6 +46,9 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
   } | null>(null);
    const { toast } = useToast();
    const navigate = useNavigate();
+  const [fullProblemHTML, setFullProblemHTML] = useState<string>('');
+  const [problemMeta, setProblemMeta] = useState<{ title?: string; difficulty?: string; leetcodeUrl?: string } | null>(null);
+  const [showProblem, setShowProblem] = useState(false);
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -55,14 +60,19 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 
   // Check for pre-filled question from interview questions
   useEffect(() => {
+    const html = localStorage.getItem('prefilledQuestionHTML') || '';
+    const metaRaw = localStorage.getItem('prefilledQuestionMeta');
+    setFullProblemHTML(html);
+    setProblemMeta(metaRaw ? JSON.parse(metaRaw) : null);
     const prefilledQuestion = localStorage.getItem('prefilledQuestion');
     const questionSource = localStorage.getItem('questionSource');
     
     if (prefilledQuestion) {
-      setQuestion(prefilledQuestion);
+      setQuestion(normalizeWhitespace(prefilledQuestion));
       // Clear the localStorage after using it
       localStorage.removeItem('prefilledQuestion');
       localStorage.removeItem('questionSource');
+      // Keep HTML/meta so the panel can render even after text is consumed
       
       // Show a toast notification
       if (questionSource) {
@@ -220,7 +230,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
   const handlePasteQuestion = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      setQuestion(text);
+      setQuestion(normalizeWhitespace(text));
     } catch (err) {
       toast({ title: "Failed to paste from clipboard", description: "Please allow clipboard access and try again." });
     }
@@ -413,6 +423,35 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
             Paste your DSA code, Express.js, or MySQL queries below and chat with our AI assistant for help and guidance.
           </p>
         </div>
+
+        {(fullProblemHTML || problemMeta) && (
+          <div className="mb-4 border rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">{problemMeta?.title || 'Problem'}</h3>
+                {problemMeta?.difficulty && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-700">{problemMeta.difficulty}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {problemMeta?.leetcodeUrl && (
+                  <a href={problemMeta.leetcodeUrl} target="_blank" rel="noreferrer" className="text-sm underline">
+                    View on LeetCode
+                  </a>
+                )}
+                <button className="text-sm underline" onClick={() => setShowProblem(s => !s)}>
+                  {showProblem ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+
+            {showProblem && (
+              fullProblemHTML
+                ? <div className="prose prose-invert max-w-none max-h-80 overflow-auto" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(fullProblemHTML) }} />
+                : <p className="text-sm text-muted-foreground">No full statement available. Try opening on LeetCode.</p>
+            )}
+          </div>
+        )}
 
         <ResizablePanelGroup direction="horizontal" className="w-full h-[70vh] gap-6">
           {/* Code Input Section */}

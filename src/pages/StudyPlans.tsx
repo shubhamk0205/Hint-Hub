@@ -27,6 +27,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchLeetCodeQuestion, deriveSlugFromUrl, stripHtml } from '@/lib/leetcode';
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { loadPlaylistProgress, saveQuestionProgress, loadStudyPlanProgress, saveStudyPlanProgress } from "@/lib/playlistProgress";
@@ -795,19 +796,60 @@ const StudyPlans = () => {
     window.open(url, '_blank');
   };
 
-  const handleGetHelp = (question: Question) => {
-    const questionText = `I need help with this LeetCode problem:
+  const handleGetHelp = async (question: Question) => {
+    try {
+      const slug = deriveSlugFromUrl(question.leetcodeUrl);
 
+      let html = '';
+      let meta: any = {
+        title: question.title,
+        difficulty: question.difficulty,
+        leetcodeUrl: question.leetcodeUrl,
+        examples: '',
+        tags: []
+      };
+
+      if (slug) {
+        const full = await fetchLeetCodeQuestion(slug);
+        html = full.content || '';
+        meta = {
+          title: full.title || question.title,
+          difficulty: full.difficulty || question.difficulty,
+          leetcodeUrl: question.leetcodeUrl,
+          examples: full.exampleTestcases || '',
+          tags: full.topicTags || []
+        };
+      }
+
+      localStorage.setItem('prefilledQuestionHTML', html);
+      localStorage.setItem('prefilledQuestionText', html ? stripHtml(html) : `Problem: ${question.title}\nURL: ${question.leetcodeUrl}`);
+      localStorage.setItem('prefilledQuestionMeta', JSON.stringify(meta));
+
+      // Optional: keep existing short text for compatibility
+      localStorage.setItem(
+        'prefilledQuestion',
+        html ? stripHtml(html) : `I need help with this LeetCode problem:
 Problem: ${question.title}
 Difficulty: ${question.difficulty}
 Topic: ${question.topic}
-LeetCode URL: ${question.leetcodeUrl}
+LeetCode URL: ${question.leetcodeUrl}`
+      );
+      localStorage.setItem('questionSource', `playlist-${selectedPlaylist?.id}-${question.id}`);
 
-Can you help me understand the problem and provide a solution approach?`;
-
-    localStorage.setItem('prefilledQuestion', questionText);
-    localStorage.setItem('questionSource', `playlist-${selectedPlaylist?.id}-${question.id}`);
-    navigate('/code-space');
+      navigate('/code-space');
+    } catch (err) {
+      // Fallback to current behavior on failure
+      localStorage.setItem(
+        'prefilledQuestion',
+        `I need help with this LeetCode problem:
+Problem: ${question.title}
+Difficulty: ${question.difficulty}
+Topic: ${question.topic}
+LeetCode URL: ${question.leetcodeUrl}`
+      );
+      localStorage.setItem('questionSource', `playlist-${selectedPlaylist?.id}-${question.id}`);
+      navigate('/code-space');
+    }
   };
 
   const calculateTopicProgress = (questions: Question[]) => {
