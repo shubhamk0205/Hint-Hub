@@ -1,12 +1,7 @@
 {
   "framework": "vite",
   "devCommand": "npm run dev",
-  "buildCommand": "npm run build",
-  "functions": {
-    "api/**": {
-      "runtime": "edge"
-    }
-  }
+  "buildCommand": "npm run build"
 }
 
 
