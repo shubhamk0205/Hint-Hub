@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-bold text-foreground">Shubham Kapoor</h3>
-              <p className="text-muted-foreground mt-2">do it for the impact</p>
+              <p className="text-muted-foreground mt-2">Do it for the impact</p>
             </div>
             <p className="text-sm text-muted-foreground">
               Building innovative solutions and helping others learn through technology.
