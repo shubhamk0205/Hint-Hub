@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Mode selection UI removed; skill level now syncs from global mode
 import { 
   Bot, 
   User, 
@@ -15,7 +15,7 @@ import {
   CheckCircle,
   ArrowRight,
   Trash2,
-  Settings,
+  // Settings, // removed from header
   MessageSquarePlus
 } from "lucide-react";
 import { getOpenRouterResponse } from "@/lib/openrouter";
@@ -61,6 +61,32 @@ const CodeChatbot = ({ code, language, question, onNewConversation }: CodeChatbo
   useEffect(() => {
     const newSessionId = generateSessionId();
     setSessionId(newSessionId);
+  }, []);
+
+  // Sync skill level from global mode stored in localStorage
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('codeSpace.userMode') as any;
+      if (v === 'beginner' || v === 'intermediate' || v === 'advanced') setSkillLevel(v);
+    } catch {}
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'codeSpace.userMode') {
+        const val = e.newValue as any;
+        if (val === 'beginner' || val === 'intermediate' || val === 'advanced') setSkillLevel(val);
+      }
+    };
+    const onCustom = () => {
+      try {
+        const v = localStorage.getItem('codeSpace.userMode') as any;
+        if (v === 'beginner' || v === 'intermediate' || v === 'advanced') setSkillLevel(v);
+      } catch {}
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('codeSpace:userMode', onCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('codeSpace:userMode', onCustom as EventListener);
+    };
   }, []);
 
   // Function to update memory info
@@ -392,19 +418,6 @@ const CodeChatbot = ({ code, language, question, onNewConversation }: CodeChatbo
             Code Assistant
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4 text-muted-foreground" />
-              <Select value={skillLevel} onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') => setSkillLevel(value)}>
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             {memoryInfo && (
               <span className="text-xs text-muted-foreground">
                 Memory: {memoryInfo.messageCount} messages

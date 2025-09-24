@@ -29,6 +29,7 @@ import {
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import DOMPurify from 'dompurify';
 import { normalizeWhitespace } from '@/lib/utils';
+// removed dialog for mode selection in favor of a header dropdown
 
  const CodeSpace = () => {
    const [code, setCode] = useState("");
@@ -49,6 +50,13 @@ import { normalizeWhitespace } from '@/lib/utils';
   const [fullProblemHTML, setFullProblemHTML] = useState<string>('');
   const [problemMeta, setProblemMeta] = useState<{ title?: string; difficulty?: string; leetcodeUrl?: string } | null>(null);
   const [showProblem, setShowProblem] = useState(false);
+  const [userMode, setUserMode] = useState<"beginner" | "intermediate" | "advanced" | null>(() => {
+    try {
+      const saved = localStorage.getItem('codeSpace.userMode');
+      if (saved === 'beginner' || saved === 'intermediate' || saved === 'advanced') return saved;
+    } catch {}
+    return null;
+  });
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -66,6 +74,7 @@ import { normalizeWhitespace } from '@/lib/utils';
       const savedQuestion = sessionStorage.getItem('codeSpace.question');
       const savedShowResult = localStorage.getItem('codeSpace.showResult');
       const savedResult = localStorage.getItem('codeSpace.result');
+      const savedMode = localStorage.getItem('codeSpace.userMode') as "beginner" | "intermediate" | "advanced" | null;
 
       if (savedCode !== null) setCode(savedCode);
       if (savedLang) setLanguage(savedLang);
@@ -74,6 +83,47 @@ import { normalizeWhitespace } from '@/lib/utils';
       if (savedResult) {
         try { setResult(JSON.parse(savedResult)); } catch {}
       }
+      if (savedMode === 'beginner' || savedMode === 'intermediate' || savedMode === 'advanced') {
+        setUserMode(savedMode);
+      }
+      // Also try reading user mode from Cache Storage
+      (async () => {
+        try {
+          if ('caches' in window) {
+            const cache = await caches.open('hint-hub');
+            const resp = await cache.match('/codespace/user-mode');
+            if (resp) {
+              const data = await resp.json();
+              const cm = data?.mode;
+              if (cm === 'beginner' || cm === 'intermediate' || cm === 'advanced') {
+                setUserMode(prev => prev ?? cm);
+              }
+            }
+          }
+        } catch {}
+      })();
+
+      // Cross-tab and cross-route sync for user mode
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === 'codeSpace.userMode') {
+          const val = e.newValue as any;
+          if (val === 'beginner' || val === 'intermediate' || val === 'advanced') {
+            setUserMode(val);
+          }
+        }
+      };
+      const onCustom = () => {
+        try {
+          const v = localStorage.getItem('codeSpace.userMode') as any;
+          if (v === 'beginner' || v === 'intermediate' || v === 'advanced') setUserMode(v);
+        } catch {}
+      };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('codeSpace:userMode', onCustom as EventListener);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('codeSpace:userMode', onCustom as EventListener);
+      };
     } catch {}
   }, []);
 
@@ -89,8 +139,23 @@ import { normalizeWhitespace } from '@/lib/utils';
       } else {
         localStorage.removeItem('codeSpace.result');
       }
+      if (userMode) {
+        localStorage.setItem('codeSpace.userMode', userMode);
+        // Also persist to Cache Storage for cache-based retention
+        (async () => {
+          try {
+            if ('caches' in window) {
+              const cache = await caches.open('hint-hub');
+              await cache.put(
+                new Request('/codespace/user-mode'),
+                new Response(JSON.stringify({ mode: userMode }), { headers: { 'Content-Type': 'application/json' } })
+              );
+            }
+          } catch {}
+        })();
+      }
     } catch {}
-  }, [code, language, question, showResult, result]);
+  }, [code, language, question, showResult, result, userMode]);
 
   // Clear only the question on full refresh (not SPA tab changes)
   useEffect(() => {
@@ -148,6 +213,25 @@ import { normalizeWhitespace } from '@/lib/utils';
       title: "Copied to clipboard",
       description: "Code has been copied to your clipboard.",
     });
+  };
+
+  const selectMode = (mode: "beginner" | "intermediate" | "advanced") => {
+    setUserMode(mode);
+    try { localStorage.setItem('codeSpace.userMode', mode); } catch {}
+    try { window.dispatchEvent(new Event('codeSpace:userMode')); } catch {}
+    // Write to Cache Storage
+    (async () => {
+      try {
+        if ('caches' in window) {
+          const cache = await caches.open('hint-hub');
+          await cache.put(
+            new Request('/codespace/user-mode'),
+            new Response(JSON.stringify({ mode }), { headers: { 'Content-Type': 'application/json' } })
+          );
+        }
+      } catch {}
+    })();
+    toast({ title: "Mode set", description: `You are in ${mode} mode.` });
   };
 
   const getCodeMirrorExtensions = () => {
@@ -474,10 +558,27 @@ import { normalizeWhitespace } from '@/lib/utils';
     <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Code Space</h1>
-          <p className="text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Code Space</h1>
+              <p className="text-muted-foreground">
             Paste your DSA code, Express.js, or MySQL queries below and chat with our AI assistant for help and guidance.
-          </p>
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">Mode</div>
+              <Select value={userMode || undefined} onValueChange={(v: any) => selectMode(v)}>
+                <SelectTrigger className="w-44 capitalize">
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         {(fullProblemHTML || problemMeta) && (
