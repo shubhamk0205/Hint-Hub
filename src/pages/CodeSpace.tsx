@@ -24,7 +24,9 @@ import {
   FileText,
   Loader2,
   CheckCircle,
-  PartyPopper
+  PartyPopper,
+  Maximize,
+  Minimize
 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import DOMPurify from 'dompurify';
@@ -57,6 +59,7 @@ import { normalizeWhitespace } from '@/lib/utils';
     } catch {}
     return null;
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -376,6 +379,23 @@ import { normalizeWhitespace } from '@/lib/utils';
     }
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // Handle F11 key for fullscreen toggle
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'F11') {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
   // Minimal evaluation: will it pass all tests? and why not if it won't
   const runEvaluation = async () => {
     if (!code.trim()) return;
@@ -555,33 +575,35 @@ import { normalizeWhitespace } from '@/lib/utils';
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Code Space</h1>
-              <p className="text-muted-foreground">
-            Paste your DSA code, Express.js, or MySQL queries below and chat with our AI assistant for help and guidance.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-muted-foreground">Mode</div>
-              <Select value={userMode || undefined} onValueChange={(v: any) => selectMode(v)}>
-                <SelectTrigger className="w-44 capitalize">
-                  <SelectValue placeholder="Select mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className={`min-h-screen ${isFullscreen ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
+      <div className={`${isFullscreen ? 'h-screen' : 'max-w-7xl mx-auto'}`}>
+        {!isFullscreen && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Code Space</h1>
+                <p className="text-muted-foreground">
+              Paste your DSA code, Express.js, or MySQL queries below and chat with our AI assistant for help and guidance.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-muted-foreground">Mode</div>
+                <Select value={userMode || undefined} onValueChange={(v: any) => selectMode(v)}>
+                  <SelectTrigger className="w-44 capitalize">
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="beginner">Beginner</SelectItem>
+                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {(fullProblemHTML || problemMeta) && (
+        {!isFullscreen && (fullProblemHTML || problemMeta) && (
           <div className="mb-4 border rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -610,9 +632,9 @@ import { normalizeWhitespace } from '@/lib/utils';
           </div>
         )}
 
-        <ResizablePanelGroup direction="horizontal" className="w-full h-[70vh] gap-6">
+        <ResizablePanelGroup direction="horizontal" className={`w-full ${isFullscreen ? 'h-screen' : 'h-[70vh]'} gap-6`}>
           {/* Code Input Section */}
-          <ResizablePanel defaultSize={60} minSize={30}>
+          <ResizablePanel defaultSize={isFullscreen ? 100 : 60} minSize={30}>
             <div className="h-full overflow-auto">
               <Card>
               <CardHeader>
@@ -620,19 +642,42 @@ import { normalizeWhitespace } from '@/lib/utils';
                   <CardTitle className="flex items-center gap-2">
                     <Code className="h-5 w-5" />
                     Code Editor
+                    {isFullscreen && (
+                      <span className="text-sm text-muted-foreground ml-2">(Fullscreen - Press F11 to exit)</span>
+                    )}
                   </CardTitle>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {languages.map((lang) => (
-                        <SelectItem key={lang.value} value={lang.value}>
-                          {lang.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languages.map((lang) => (
+                          <SelectItem key={lang.value} value={lang.value}>
+                            {lang.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleFullscreen}
+                      className="flex items-center gap-1"
+                    >
+                      {isFullscreen ? (
+                        <>
+                          <Minimize className="h-4 w-4" />
+                          Exit Fullscreen
+                        </>
+                      ) : (
+                        <>
+                          <Maximize className="h-4 w-4" />
+                          Fullscreen
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <CardDescription>
                   Paste your DSA problems, Express.js code, or MySQL queries here
@@ -691,7 +736,7 @@ import { normalizeWhitespace } from '@/lib/utils';
                   ) : (
                     <CodeMirror
                       value={code}
-                      height="384px"
+                      height={isFullscreen ? "calc(100vh - 200px)" : "384px"}
                       theme={vscodeDark}
                       extensions={getCodeMirrorExtensions()}
                       basicSetup={{
@@ -749,19 +794,21 @@ import { normalizeWhitespace } from '@/lib/utils';
             </div>
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          {!isFullscreen && <ResizableHandle withHandle />}
 
           {/* AI Chatbot Section */}
-          <ResizablePanel defaultSize={40} minSize={30}>
-            <div className="h-full overflow-auto">
-              <CodeChatbot 
-                code={code} 
-                language={language} 
-                question={question} 
-                onNewConversation={handleNewConversation}
-              />
-            </div>
-          </ResizablePanel>
+          {!isFullscreen && (
+            <ResizablePanel defaultSize={40} minSize={30}>
+              <div className="h-full overflow-auto">
+                <CodeChatbot 
+                  code={code} 
+                  language={language} 
+                  question={question} 
+                  onNewConversation={handleNewConversation}
+                />
+              </div>
+            </ResizablePanel>
+          )}
         </ResizablePanelGroup>
       </div>
     </div>
