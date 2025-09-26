@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import CodeChatbot from "@/components/CodeChatbot";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/lib/firebase";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Code, 
   Copy, 
@@ -57,7 +58,7 @@ import { normalizeWhitespace } from '@/lib/utils';
       const saved = localStorage.getItem('codeSpace.userMode');
       if (saved === 'beginner' || saved === 'intermediate' || saved === 'advanced') return saved;
     } catch {}
-    return null;
+    return null; // Always start with no mode selected
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   useEffect(() => {
@@ -810,6 +811,65 @@ import { normalizeWhitespace } from '@/lib/utils';
             </ResizablePanel>
           )}
         </ResizablePanelGroup>
+
+        {/* Mode Selection Popup */}
+        <Dialog open={userMode === null} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader className="text-center">
+              <DialogTitle className="text-xl font-bold">
+                Choose Your Experience Level
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Select your programming experience to get personalized assistance.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 py-4">
+              <div className="space-y-3">
+                <div 
+                  className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                  onClick={() => selectMode('beginner')}
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-green-600">Beginner</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Perfect for starters! New to programming or DSA.
+                    </p>
+                  </div>
+                  <div className="text-2xl">🌱</div>
+                </div>
+                
+                <div 
+                  className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                  onClick={() => selectMode('intermediate')}
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-600">Intermediate</h3>
+                    <p className="text-xs text-muted-foreground">
+                      You know data structures like arrays, maps, sets, trees, and graphs.
+                    </p>
+                  </div>
+                  <div className="text-2xl">🚀</div>
+                </div>
+                
+                <div 
+                  className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                  onClick={() => selectMode('advanced')}
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-purple-600">Advanced</h3>
+                    <p className="text-xs text-muted-foreground">
+                      You're comfortable with Dynamic Programming (DP) and advanced algorithms.
+                    </p>
+                  </div>
+                  <div className="text-2xl">⚡</div>
+                </div>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground text-center">
+              You can change this setting anytime from the dropdown in the header.
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
