@@ -20,14 +20,15 @@ import {
   Code, 
   Copy, 
   Trash2,
-  Play,
+  Maximize,
+  Minimize,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Search,
   Eye,
   FileText,
-  Loader2,
-  CheckCircle,
-  PartyPopper,
-  Maximize,
-  Minimize
+  Loader2
 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import DOMPurify from 'dompurify';
@@ -38,16 +39,16 @@ import { normalizeWhitespace } from '@/lib/utils';
    const [code, setCode] = useState("");
    const [language, setLanguage] = useState("java");
    const [question, setQuestion] = useState("");
-   const [isExecuting, setIsExecuting] = useState(false);
-   const [showResult, setShowResult] = useState(false);
-  const [result, setResult] = useState<{
-    willPassAll: boolean;
-    reason: string;
-    issues?: string[]; // top issues
-    failingScenarios?: string[]; // example failing inputs or scenarios
-    suggestedFixes?: string[]; // concrete next steps
-    riskyInputs?: string[]; // edge cases to test
+  const [isChecking, setIsChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<{
+    isValid: boolean;
+    syntaxCorrect: boolean;
+    logicCorrect: boolean;
+    explanation: string;
+    issues: string[];
+    testCases: string[];
   } | null>(null);
+  const [showCheckResult, setShowCheckResult] = useState(false);
    const { toast } = useToast();
    const navigate = useNavigate();
   const [fullProblemHTML, setFullProblemHTML] = useState<string>('');
@@ -76,17 +77,11 @@ import { normalizeWhitespace } from '@/lib/utils';
       const savedCode = localStorage.getItem('codeSpace.code');
       const savedLang = localStorage.getItem('codeSpace.language');
       const savedQuestion = sessionStorage.getItem('codeSpace.question');
-      const savedShowResult = localStorage.getItem('codeSpace.showResult');
-      const savedResult = localStorage.getItem('codeSpace.result');
       const savedMode = localStorage.getItem('codeSpace.userMode') as "beginner" | "intermediate" | "advanced" | null;
 
       if (savedCode !== null) setCode(savedCode);
       if (savedLang) setLanguage(savedLang);
       if (savedQuestion) setQuestion(savedQuestion);
-      if (savedShowResult) setShowResult(savedShowResult === '1');
-      if (savedResult) {
-        try { setResult(JSON.parse(savedResult)); } catch {}
-      }
       if (savedMode === 'beginner' || savedMode === 'intermediate' || savedMode === 'advanced') {
         setUserMode(savedMode);
       }
@@ -137,12 +132,6 @@ import { normalizeWhitespace } from '@/lib/utils';
       localStorage.setItem('codeSpace.code', code);
       localStorage.setItem('codeSpace.language', language);
       sessionStorage.setItem('codeSpace.question', question);
-      localStorage.setItem('codeSpace.showResult', showResult ? '1' : '0');
-      if (result) {
-        localStorage.setItem('codeSpace.result', JSON.stringify(result));
-      } else {
-        localStorage.removeItem('codeSpace.result');
-      }
       if (userMode) {
         localStorage.setItem('codeSpace.userMode', userMode);
         // Also persist to Cache Storage for cache-based retention
@@ -159,7 +148,7 @@ import { normalizeWhitespace } from '@/lib/utils';
         })();
       }
     } catch {}
-  }, [code, language, question, showResult, result, userMode]);
+  }, [code, language, question, userMode]);
 
   // Clear only the question on full refresh (not SPA tab changes)
   useEffect(() => {
@@ -366,8 +355,6 @@ import { normalizeWhitespace } from '@/lib/utils';
     try {
       localStorage.removeItem('codeSpace.code');
       sessionStorage.removeItem('codeSpace.question');
-      localStorage.removeItem('codeSpace.result');
-      localStorage.setItem('codeSpace.showResult', '0');
     } catch {}
   };
 
@@ -397,183 +384,172 @@ import { normalizeWhitespace } from '@/lib/utils';
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  // Minimal evaluation: will it pass all tests? and why not if it won't
-  const runEvaluation = async () => {
-    if (!code.trim()) return;
-    setIsExecuting(true);
-    setResult(null);
+  // Check code functionality for LeetCode problems
+  const checkCode = async () => {
+    if (!code.trim() || !question.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide both code and the problem statement to check your solution.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsChecking(true);
+    setCheckResult(null);
+    
     try {
       const OPENROUTER_API_KEY = (import.meta as any).env?.VITE_OPENROUTER_API_KEY;
       const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-      const model = (import.meta as any).env?.VITE_OPENROUTER_MODEL || 'openai/gpt-3.5-turbo';
+      const model = (import.meta as any).env?.VITE_OPENROUTER_MODEL || 'openai/gpt-4o';
 
-      // Preflight checks for common 401 causes
-      if (!OPENROUTER_API_KEY || typeof OPENROUTER_API_KEY !== 'string' || OPENROUTER_API_KEY.trim().length === 0) {
-        setResult({
-          willPassAll: false,
-          reason: 'Missing OpenRouter API key. Set VITE_OPENROUTER_API_KEY in your .env, then restart the dev server.'
+      if (!OPENROUTER_API_KEY) {
+        setCheckResult({
+          isValid: false,
+          syntaxCorrect: false,
+          logicCorrect: false,
+          explanation: 'Missing OpenRouter API key. Please configure VITE_OPENROUTER_API_KEY in your environment.',
+          issues: ['API key not configured'],
+          suggestions: ['Set up your OpenRouter API key'],
+          testCases: []
         });
-        setShowResult(true);
+        setShowCheckResult(true);
         return;
       }
 
-      const system = `You are a STRICT code judge for LeetCode-style questions. Be conservative: DEFAULT to willPassAll=false unless you can clearly argue coverage of edge cases and constraints typical to LeetCode. Use the provided Problem Context as the source of truth (inputs/outputs/constraints). If code contradicts the Problem Context, explain precisely.\n\nNEVER contradict explicit guarantees in the Problem Context. For example, if it states "exactly one solution", do NOT claim multiple solutions/ambiguity; if it states "may not use the same element twice", assume inputs respect this. Judge the code under the stated guarantees.\n\nIMPORTANT: The boolean and the explanation must be CONSISTENT.\n- If willPassAll = true: reason should briefly affirm correctness, complexity, and edge-case coverage. Do NOT include failure reasons.\n- If willPassAll = false: reason must start with "Fails because:" followed by concrete blockers; do NOT praise correctness.\n\nReturn ONLY JSON with this schema:\n{\n  willPassAll: boolean,\n  reason: string, // 1-4 sentence summary\n  issues?: string[], // top 3 concrete issues (e.g., "doesn't handle negatives")\n  failingScenarios?: string[], // up to 3 example inputs/scenarios likely to fail\n  suggestedFixes?: string[], // up to 3 specific implementation changes\n  riskyInputs?: string[] // up to 5 edge inputs to test\n}\nRules:\n- Assume LeetCode-style constraints and data ranges; consider negatives, zeros, empties/nulls, duplicates, sorted/unsorted, boundaries, integer overflow, and large inputs.\n- Consider time/space complexity vs typical constraints (e.g., O(n) or O(n log n) when required).\n- If a known optimal pattern (two pointers, sliding window, prefix sums, sorting+scan, hashing, stack, binary search, heap, union-find, DP) is correctly implemented for the standard problem, willPassAll=true.\n- If complexity is worse than required or edge cases are unhandled, set willPassAll=false.\n- Do NOT nitpick style; judge correctness and constraints coverage only.\n- Always ground feedback in the Problem Context when provided.`;
+      const systemPrompt = `You are an expert LeetCode code reviewer and validator. Your task is to thoroughly analyze code submissions for LeetCode problems and provide comprehensive feedback.
 
-      const user = `Question Type: LeetCode-style\nLanguage: ${language}\n\nProblem Context (source of truth):\n${question || 'N/A'}\n\nYour task: Judge the code strictly against the Problem Context above. If the problem is missing, infer likely constraints from common LeetCode patterns and state assumptions in your reason.\n\nCode to evaluate:\n\`\`\`${language}\n${code}\n\`\`\``;
+ANALYSIS FRAMEWORK:
+1. SYNTAX VALIDATION: Check for syntax errors, compilation issues, and language-specific problems
+2. LOGIC VALIDATION: Verify the algorithm correctness, edge case handling, and time/space complexity
+3. PROBLEM ALIGNMENT: Ensure the solution matches the problem requirements and constraints
+4. TEST CASE COVERAGE: Analyze how the code would perform on various test cases
 
-      const r = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Hint Hub'
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user }
-          ],
-          temperature: 0.1,
-          top_p: 0.2,
-          max_tokens: 700
-        })
-      });
-      if (!r.ok) {
-        // Attempt to extract more details from error body
-        let errMsg = `API ${r.status}`;
-        try {
-          const txt = await r.text();
-          // Try JSON parse first
-          try {
-            const j = JSON.parse(txt);
-            errMsg = j?.error?.message || JSON.stringify(j).slice(0, 500);
-          } catch {
-            errMsg = txt.slice(0, 500);
-          }
-        } catch {}
+EVALUATION CRITERIA:
+- Syntax: No compilation errors, proper language constructs
+- Logic: Correct algorithm implementation, handles edge cases
+- Efficiency: Appropriate time/space complexity for the problem
+- Completeness: Solves the problem as described
+- Robustness: Handles boundary conditions and edge cases
 
-        if (r.status === 401) {
-          setResult({
-            willPassAll: false,
-            reason: `Unauthorized (401). Check your OpenRouter API key and model access. Details: ${errMsg}`
-          });
-          setShowResult(true);
-          return;
-        }
+RESPONSE FORMAT (JSON only):
+{
+  "isValid": boolean,
+  "syntaxCorrect": boolean,
+  "logicCorrect": boolean,
+  "explanation": "string - comprehensive analysis of the code",
+  "issues": ["string array - specific problems found"],
+  "testCases": ["string array - example test cases to verify"]
+}
 
-        throw new Error(errMsg);
-      }
-      const data = await r.json();
-      let content: string = data?.choices?.[0]?.message?.content || '';
-      content = content.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(content);
+GUIDELINES:
+- Be thorough but constructive in your analysis
+- Focus on LeetCode-specific patterns and best practices
+- Consider time/space complexity requirements
+- Provide actionable feedback for improvement
+- If code is correct, explain why it works well
+- If code has issues, provide specific fixes and explanations
+- Always consider edge cases and boundary conditions
+- Validate against the problem constraints and requirements`;
 
-      // Second pass: adversarial critic to search for failures
-      const criticSystem = `ROLE: Adversarial critic for LeetCode-style problems. Your job is to stress-test the submission ONLY within the stated Problem Context.\n\nSTRICT CONTEXT RULES (TREAT AS AXIOMS):\n- If the context says "exactly one solution", DO NOT complain about multiple solutions or ambiguity.\n- If it says "may not use the same element twice", DO NOT raise reuse-of-same-index issues.\n- If it says "return indices in any order", DO NOT require a specific order.\n- Respect all other explicit guarantees; do not invent conflicting requirements.\n\nWHAT TO SEARCH FOR INSTEAD:\n- Genuine contradictions with the stated behavior (e.g., wrong indices mapping, missing i != j checks when not guaranteed, but skip if guarantee forbids reuse).\n- Edge cases not excluded by context: negatives, zeros, duplicates-at-different-indices, empty/size-1 arrays, boundary indices.\n- Time/space complexity worse than typical constraints required by the problem family.\n- Unsafe assumptions (overflow, integer division, off-by-one at bounds), unless context guarantees they cannot occur.\n\nOUTPUT (JSON ONLY):\n{\n  definitiveFail: boolean,\n  reasons?: string[],  // up to 3 precise, non-contradictory reasons that DO NOT violate context axioms\n  failingScenarios?: string[], // up to 3 concrete inputs likely to fail under the context\n  riskyInputs?: string[] // up to 5 edge inputs to test that do not contradict the context\n}`;
-      const criticUser = `Question Type: LeetCode-style\nLanguage: ${language}\n\nProblem Context (source of truth):\n${question || 'N/A'}\n\nYour task: Using the Problem Context above, look for contradictions, missing edge cases, or complexity mismatches in the code. If the context guarantees "exactly one solution" or "do not reuse the same element", assume those guarantees hold and judge under them.\n\nCode to analyze:\n\`\`\`${language}\n${code}\n\`\`\``;
-      let critic: any = null;
-      try {
-        const rc = await fetch(API_URL, {
+      const userPrompt = `PROBLEM STATEMENT:
+${question}
+
+LANGUAGE: ${language}
+
+CODE TO ANALYZE:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Please analyze this code submission for the given LeetCode problem. Check for:
+1. Syntax correctness
+2. Logic accuracy
+3. Algorithm efficiency
+4. Edge case handling
+5. Problem requirement compliance
+
+Provide a comprehensive analysis with specific feedback and suggestions for improvement.`;
+
+      const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
             'HTTP-Referer': window.location.origin,
-            'X-Title': 'Hint Hub'
+          'X-Title': 'Hint Hub - Code Checker'
           },
           body: JSON.stringify({
             model,
             messages: [
-              { role: 'system', content: criticSystem },
-              { role: 'user', content: criticUser }
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
             ],
             temperature: 0.1,
             top_p: 0.2,
-            max_tokens: 500
+          max_tokens: 1500
           })
         });
-        const criticData = await rc.json();
-        let criticContent: string = criticData?.choices?.[0]?.message?.content || '';
-        criticContent = criticContent.replace(/```json|```/g, '').trim();
-        critic = JSON.parse(criticContent);
-      } catch {}
 
-      // Merge results with conservative bias
-      let willPassAll = !!parsed.willPassAll && !(critic?.definitiveFail === true);
-      const mergedIssues = [
-        ...(Array.isArray(parsed.issues) ? parsed.issues : []),
-        ...(Array.isArray(critic?.reasons) ? critic.reasons : [])
-      ].filter(Boolean).slice(0, 3);
-      const mergedFailing = [
-        ...(Array.isArray(parsed.failingScenarios) ? parsed.failingScenarios : []),
-        ...(Array.isArray(critic?.failingScenarios) ? critic.failingScenarios : [])
-      ].filter(Boolean).slice(0, 3);
-      const mergedRisky = [
-        ...(Array.isArray(parsed.riskyInputs) ? parsed.riskyInputs : []),
-        ...(Array.isArray(critic?.riskyInputs) ? critic.riskyInputs : [])
-      ].filter(Boolean).slice(0, 5);
-
-      // Build a consistent reason and auto-correct contradictions
-      const rawReason: string = typeof parsed.reason === 'string' ? parsed.reason : '';
-      const looksPositive = /\b(correct|works|efficient|passes|good|optimal|handles|covers)\b/i.test(rawReason);
-      let finalReason = rawReason.trim();
-      // Context guards derived from Problem Context
-      const ctx = (question || '').toLowerCase();
-      const ctxOneSolution = /exactly one solution/.test(ctx);
-      const ctxNoReuse = /(may not|cannot|can't|do not|don't) use the same element twice/.test(ctx);
-      // If model said fail but explanation is clearly positive and critic didn't flag definitive fail, flip to pass
-      if (!willPassAll && looksPositive && !(critic?.definitiveFail === true)) {
-        willPassAll = true;
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
       }
 
-      // If model failed due to reasons that contradict the Problem Context guarantees, flip to pass
-      if (!willPassAll && !(critic?.definitiveFail === true)) {
-        const contradictionSameElement = /same element (is|was)? used twice|reuse the same element/i.test(rawReason) || (mergedIssues.join(' ; ') + ' ' + (critic?.reasons || []).join(' ; ')).match(/same element/i);
-        const contradictionMultiSolutions = /multiple (pairs|solutions)|more than one solution/i.test(rawReason) || (mergedIssues.join(' ; ') + ' ' + (critic?.reasons || []).join(' ; ')).match(/multiple|more than one/i);
-        const contradictionNoPairEmpty = /returns an empty array when no valid pair is found/i.test(rawReason);
-        if ((ctxNoReuse && contradictionSameElement) || (ctxOneSolution && (contradictionMultiSolutions || contradictionNoPairEmpty))) {
-          willPassAll = true;
-        }
+      const data = await response.json();
+      let content = data?.choices?.[0]?.message?.content || '';
+      
+      // Clean up the response
+      content = content.replace(/```json|```/g, '').trim();
+      
+      try {
+        const result = JSON.parse(content);
+        setCheckResult(result);
+        setShowCheckResult(true);
+        
+        toast({
+          title: result.isValid ? "Code Analysis Complete" : "Issues Found",
+          description: result.isValid 
+            ? "Your code looks good! Check the detailed analysis below."
+            : "Some issues were found. Please review the suggestions.",
+          variant: result.isValid ? "default" : "destructive"
+        });
+      } catch (parseError) {
+        // Fallback if JSON parsing fails
+        setCheckResult({
+          isValid: false,
+          syntaxCorrect: false,
+          logicCorrect: false,
+          explanation: content || 'Unable to parse analysis results',
+          issues: ['Failed to parse analysis results'],
+          suggestions: ['Please try again or check your code manually'],
+          testCases: []
+        });
+        setShowCheckResult(true);
       }
 
-      if (!willPassAll) {
-        if (!finalReason || looksPositive) {
-          const criticText = Array.isArray(critic?.reasons) && critic.reasons.length ? critic.reasons.join('; ') : '';
-          const issuesText = mergedIssues.length ? mergedIssues.join('; ') : '';
-          const base = criticText || issuesText || 'Edge cases not handled or complexity too high for constraints';
-          finalReason = `Fails because: ${base}`;
-        } else if (!/^Fails because:/i.test(finalReason)) {
-          finalReason = `Fails because: ${finalReason}`;
-        }
-      } else {
-        if (!finalReason || /fail|wrong|issue|bug/i.test(finalReason)) {
-          finalReason = 'Passes because it matches the Problem Context, runs in acceptable complexity, and covers required edge cases.';
-        }
-        // If reason was prefixed as failure, normalize to positive wording
-        if (/^Fails because:/i.test(finalReason)) {
-          finalReason = 'Passes because it matches the Problem Context, runs in acceptable complexity, and covers required edge cases.';
-        }
-      }
-
-      setResult({
-        willPassAll,
-        reason: finalReason,
-        issues: mergedIssues.length ? mergedIssues : undefined,
-        failingScenarios: mergedFailing.length ? mergedFailing : undefined,
-        suggestedFixes: Array.isArray(parsed.suggestedFixes) ? parsed.suggestedFixes.slice(0, 3) : undefined,
-        riskyInputs: mergedRisky.length ? mergedRisky : undefined,
+    } catch (error: any) {
+      console.error('Code check error:', error);
+      setCheckResult({
+        isValid: false,
+        syntaxCorrect: false,
+        logicCorrect: false,
+        explanation: `Error during code analysis: ${error.message}`,
+        issues: ['Analysis failed'],
+        suggestions: ['Please check your internet connection and try again'],
+        testCases: []
       });
-      setShowResult(true);
-    } catch (e: any) {
-      setResult({ willPassAll: false, reason: e?.message || 'API error' });
-      setShowResult(true);
-      toast({ title: 'Run failed', description: 'Could not evaluate code. Showing best-effort reason.', variant: 'destructive' });
+      setShowCheckResult(true);
+      
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze your code. Please try again.",
+        variant: "destructive"
+      });
     } finally {
-      setIsExecuting(false);
+      setIsChecking(false);
     }
   };
+
 
   return (
     <div className={`min-h-screen ${isFullscreen ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
@@ -699,40 +675,83 @@ import { normalizeWhitespace } from '@/lib/utils';
                   </Button>
                 </div>
                 <div className="min-h-96">
-                  {showResult ? (
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg min-h-[384px] flex flex-col gap-4">
+                  {showCheckResult && checkResult ? (
+                    <div className="bg-gray-900 text-gray-100 p-6 rounded-lg min-h-[384px] flex flex-col gap-4">
+                      {/* Header with status */}
                       <div className="flex items-center justify-between">
-                        <div className="text-sm">
-                          <span className="opacity-80">Assistant verdict:</span>{' '}
-                          {result?.willPassAll ? (
-                            <span className="text-green-400">will pass all test cases</span>
+                        <div className="flex items-center gap-3">
+                          {checkResult.isValid ? (
+                            <div className="flex items-center gap-2 text-green-400">
+                              <CheckCircle className="h-6 w-6" />
+                              <span className="font-semibold">Code Analysis Complete</span>
+                            </div>
                           ) : (
-                            <span className="text-red-400">will NOT pass all test cases</span>
+                            <div className="flex items-center gap-2 text-red-400">
+                              <XCircle className="h-6 w-6" />
+                              <span className="font-semibold">Issues Found</span>
+                            </div>
                           )}
                         </div>
-                        {result?.willPassAll && (
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-5 w-5 text-green-400" />
-                            <span className="text-green-300 text-sm">Accepted</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCheckResult(false)}
+                          className="text-gray-300 hover:text-white"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Show Code
+                        </Button>
                           </div>
-                        )}
+
+
+                      {/* Explanation */}
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <Search className="h-4 w-4" />
+                          Analysis
+                        </h4>
+                        <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                          {checkResult.explanation}
+                        </p>
                       </div>
-                      {result?.willPassAll && (
-                        <div className="relative overflow-hidden rounded-lg border border-green-700/40 bg-gradient-to-r from-green-900/40 to-emerald-900/30 p-3">
-                          <div className="flex items-center gap-2 text-green-300 text-sm">
-                            <PartyPopper className="h-4 w-4" />
-                            <span>All test cases passed — great job! Keep the momentum going.</span>
-                          </div>
-                          <div className="absolute -right-8 -top-8 opacity-20">
-                            <CheckCircle className="h-20 w-20 text-green-500" />
-                          </div>
+
+                      {/* Issues */}
+                      {checkResult.issues && checkResult.issues.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-2 flex items-center gap-2 text-red-400">
+                            <AlertTriangle className="h-4 w-4" />
+                            Issues Found
+                          </h4>
+                          <ul className="space-y-1">
+                            {checkResult.issues.map((issue, index) => (
+                              <li key={index} className="text-sm text-red-300 flex items-start gap-2">
+                                <span className="text-red-400 mt-1">•</span>
+                                <span>{issue}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
-                      <div>
-                        <h4 className="font-semibold mb-2">Why:</h4>
-                        <p className="text-sm text-gray-200 whitespace-pre-wrap">{result?.reason || 'No details from API'}</p>
-                      </div>
-                      {/* Per request: show only the reason. Extra sections hidden. */}
+
+
+                      {/* Test Cases */}
+                      {checkResult.testCases && checkResult.testCases.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-2 flex items-center gap-2 text-yellow-400">
+                            <Eye className="h-4 w-4" />
+                            Test Cases to Verify
+                          </h4>
+                          <ul className="space-y-1">
+                            {checkResult.testCases.map((testCase, index) => (
+                              <li key={index} className="text-sm text-yellow-300 flex items-start gap-2">
+                                <span className="text-yellow-400 mt-1">•</span>
+                                <span className="font-mono bg-gray-800 px-2 py-1 rounded">{testCase}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
                     </div>
                   ) : (
                     <CodeMirror
@@ -752,24 +771,28 @@ import { normalizeWhitespace } from '@/lib/utils';
                 </div>
                 <div className="flex items-center flex-wrap gap-2 mt-4">
                   <Button 
-                    onClick={runEvaluation}
-                    disabled={!code.trim() || isExecuting}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={checkCode}
+                    disabled={!code.trim() || !question.trim() || isChecking}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    {isExecuting ? (
+                    {isChecking ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Evaluating...
+                        Checking...
                       </>
                     ) : (
                       <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Run Code
+                        <Search className="h-4 w-4 mr-2" />
+                        Check Code
                       </>
                     )}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowResult((s) => !s)} disabled={!result && !code}>
-                    {showResult ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCheckResult((s) => !s)} 
+                    disabled={!checkResult && !code}
+                  >
+                    {showCheckResult ? (
                       <>
                         <FileText className="h-4 w-4 mr-2" />
                         Show Code
