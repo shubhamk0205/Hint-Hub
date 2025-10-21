@@ -45,7 +45,7 @@ const SupportWidget = () => {
           size="icon"
           title="Press S to open support"
         >
-          <CupSoda className="h-7 w-7 text-primary-foreground drop-shadow-lg" style={{
+          <CupSoda className="h-20 w-20 text-primary-foreground drop-shadow-lg" style={{
             filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.3)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.1))'
           }} />
         </Button>
