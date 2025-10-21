@@ -71,15 +71,17 @@ import { normalizeWhitespace } from '@/lib/utils';
     return () => unsubscribe();
   }, [navigate]);
 
-  // Restore persisted Code Space state on mount
+  // Restore persisted Code Space state on mount (excluding code)
   useEffect(() => {
     try {
-      const savedCode = localStorage.getItem('codeSpace.code');
+      // Clear any existing code from localStorage to ensure fresh start
+      localStorage.removeItem('codeSpace.code');
+      
+      // Don't restore code - start with empty code space
       const savedLang = localStorage.getItem('codeSpace.language');
       const savedQuestion = sessionStorage.getItem('codeSpace.question');
       const savedMode = localStorage.getItem('codeSpace.userMode') as "beginner" | "intermediate" | "advanced" | null;
 
-      if (savedCode !== null) setCode(savedCode);
       if (savedLang) setLanguage(savedLang);
       if (savedQuestion) setQuestion(savedQuestion);
       if (savedMode === 'beginner' || savedMode === 'intermediate' || savedMode === 'advanced') {
@@ -126,10 +128,10 @@ import { normalizeWhitespace } from '@/lib/utils';
     } catch {}
   }, []);
 
-  // Persist Code Space state on change
+  // Persist Code Space state on change (excluding code)
   useEffect(() => {
     try {
-      localStorage.setItem('codeSpace.code', code);
+      // Don't persist code - it should be cleared on refresh
       localStorage.setItem('codeSpace.language', language);
       sessionStorage.setItem('codeSpace.question', question);
       if (userMode) {
@@ -148,7 +150,7 @@ import { normalizeWhitespace } from '@/lib/utils';
         })();
       }
     } catch {}
-  }, [code, language, question, userMode]);
+  }, [language, question, userMode]);
 
   // Clear only the question on full refresh (not SPA tab changes)
   useEffect(() => {
@@ -353,7 +355,6 @@ import { normalizeWhitespace } from '@/lib/utils';
     });
     // Clear persisted state so a fresh conversation starts clean
     try {
-      localStorage.removeItem('codeSpace.code');
       sessionStorage.removeItem('codeSpace.question');
     } catch {}
   };
@@ -689,9 +690,9 @@ Provide a comprehensive analysis with specific feedback and suggestions for impr
                             <div className="flex items-center gap-2 text-red-400">
                               <XCircle className="h-6 w-6" />
                               <span className="font-semibold">Issues Found</span>
-                            </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
+                      </div>
                         <Button
                           variant="outline"
                           size="sm"
@@ -713,7 +714,7 @@ Provide a comprehensive analysis with specific feedback and suggestions for impr
                         <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
                           {checkResult.explanation}
                         </p>
-                      </div>
+                          </div>
 
                       {/* Issues */}
                       {checkResult.issues && checkResult.issues.length > 0 && (
@@ -736,7 +737,7 @@ Provide a comprehensive analysis with specific feedback and suggestions for impr
 
                       {/* Test Cases */}
                       {checkResult.testCases && checkResult.testCases.length > 0 && (
-                        <div>
+                      <div>
                           <h4 className="font-semibold mb-2 flex items-center gap-2 text-yellow-400">
                             <Eye className="h-4 w-4" />
                             Test Cases to Verify
@@ -749,7 +750,7 @@ Provide a comprehensive analysis with specific feedback and suggestions for impr
                               </li>
                             ))}
                           </ul>
-                        </div>
+                      </div>
                       )}
 
                     </div>
