@@ -24,7 +24,8 @@ import {
   GraduationCap,
   Zap,
   Star,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchLeetCodeQuestion, deriveSlugFromUrl, stripHtml, mapTitleToSlug } from '@/lib/leetcode';
@@ -97,6 +98,9 @@ const StudyPlans = () => {
   const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState("all");
   const [playlistQuestionSearchQuery, setPlaylistQuestionSearchQuery] = useState("");
   const [playlistQuestionDifficultyFilter, setPlaylistQuestionDifficultyFilter] = useState("all");
+  
+  // Loading state for help functionality
+  const [loadingHelp, setLoadingHelp] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -797,6 +801,8 @@ const StudyPlans = () => {
   };
 
   const handleGetHelp = async (question: Question) => {
+    setLoadingHelp(question.id);
+    
     try {
       let slug = deriveSlugFromUrl(question.leetcodeUrl) || mapTitleToSlug(question.title);
 
@@ -849,6 +855,8 @@ LeetCode URL: ${question.leetcodeUrl}`
       );
       localStorage.setItem('questionSource', `playlist-${selectedPlaylist?.id}-${question.id}`);
       navigate('/code-space');
+    } finally {
+      setLoadingHelp(null);
     }
   };
 
@@ -1022,10 +1030,15 @@ LeetCode URL: ${question.leetcodeUrl}`
                               e.stopPropagation();
                               handleGetHelp(question);
                             }}
+                            disabled={loadingHelp === question.id}
                             className="flex items-center gap-1"
                           >
-                            <HelpCircle className="h-3 w-3" />
-                            Help
+                            {loadingHelp === question.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <HelpCircle className="h-3 w-3" />
+                            )}
+                            {loadingHelp === question.id ? 'Loading...' : 'Help'}
                           </Button>
                           <Button
                             variant="outline"
@@ -1207,10 +1220,15 @@ LeetCode URL: ${question.leetcodeUrl}`
                                       e.stopPropagation();
                                       handleGetHelp(question);
                                     }}
+                                    disabled={loadingHelp === question.id}
                                     className="flex items-center gap-1"
                                   >
-                                    <HelpCircle className="h-3 w-3" />
-                                    Help
+                                    {loadingHelp === question.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <HelpCircle className="h-3 w-3" />
+                                    )}
+                                    {loadingHelp === question.id ? 'Loading...' : 'Help'}
                                   </Button>
                                   <Button
                                     variant="outline"
