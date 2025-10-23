@@ -2,7 +2,7 @@
 
 import { getMemoryManager, ConversationMemoryManager } from './conversation-memory';
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "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";
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "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";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL || "openai/gpt-3.5-turbo";
 
